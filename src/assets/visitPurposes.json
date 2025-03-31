@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "en": "Business Meeting",
+    "hr": "Poslovni sastanak",
+    "de": "Geschäftstreffen",
+    "fr": "Réunion d'affaires",
+    "it": "Riunione di lavoro"
+  },
+  {
+    "id": 2,
+    "en": "Interview",
+    "hr": "Intervju",
+    "de": "Vorstellungsgespräch",
+    "fr": "Entretien",
+    "it": "Colloquio"
+  },
+  {
+    "id": 3,
+    "en": "Project Collaboration",
+    "hr": "Suradnja na projektu",
+    "de": "Projektzusammenarbeit",
+    "fr": "Collaboration de projet",
+    "it": "Collaborazione al progetto"
+  },
+  {
+    "id": 4,
+    "en": "Client Meeting",
+    "hr": "Sastanak s klijentom",
+    "de": "Kundentreffen",
+    "fr": "Réunion avec un client",
+    "it": "Incontro con il cliente"
+  },
+  {
+    "id": 5,
+    "en": "Partnership Discussion",
+    "hr": "Rasprava o partnerstvu",
+    "de": "Partnerschaftsdiskussion",
+    "fr": "Discussion de partenariat",
+    "it": "Discussione sulla partnership"
+  }
+]

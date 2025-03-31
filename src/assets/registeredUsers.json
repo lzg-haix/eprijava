@@ -1,0 +1,52 @@
+[
+  {
+    "fullName": "John Doe",
+    "companyName": "Example Corp",
+    "visitPurpose": "Business Meeting",
+    "contactPerson": "Jane Smith",
+    "gdprAgreement": true,
+    "pinCode": "1234",
+    "defaultLanguage": "en",
+    "online": false
+  },
+  {
+    "fullName": "Joža Krampus",
+    "companyName": "Šmarnica d.o.o.",
+    "visitPurpose": "Interview",
+    "contactPerson": "Phillip Hoffmann",
+    "gdprAgreement": true,
+    "pinCode": "5678",
+    "defaultLanguage": "hr",
+    "online": true
+  },
+  {
+    "fullName": "Max Mustermann",
+    "companyName": "Musterfirma",
+    "visitPurpose": "Partnership Discussion",
+    "contactPerson": "Anna Müller",
+    "gdprAgreement": true,
+    "pinCode": "9101",
+    "defaultLanguage": "de",
+    "online": true
+  },
+  {
+    "fullName": "Jean Dupont",
+    "companyName": "Entreprise Française",
+    "visitPurpose": "Project Collaboration",
+    "contactPerson": "Marie Curie",
+    "gdprAgreement": true,
+    "pinCode": "1122",
+    "defaultLanguage": "fr",
+    "online": false
+  },
+  {
+    "fullName": "Giovanni Rossi",
+    "companyName": "Soluzioni Italiane",
+    "visitPurpose": "Client Meeting",
+    "contactPerson": "Luca Bianchi",
+    "gdprAgreement": true,
+    "pinCode": "3344",
+    "defaultLanguage": "it",
+    "online": false
+  }
+]

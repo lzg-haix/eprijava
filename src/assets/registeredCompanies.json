@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Example Corp",
+    "industry": "Technology",
+    "location": "New York, USA"
+  },
+  {
+    "id": 2,
+    "name": "Tech Solutions",
+    "industry": "IT Services",
+    "location": "Zagreb, Croatia"
+  },
+  {
+    "id": 3,
+    "name": "Musterfirma",
+    "industry": "Manufacturing",
+    "location": "Berlin, Germany"
+  },
+  {
+    "id": 4,
+    "name": "Entreprise Française",
+    "industry": "Consulting",
+    "location": "Paris, France"
+  },
+  {
+    "id": 5,
+    "name": "Soluzioni Italiane",
+    "industry": "Design",
+    "location": "Milan, Italy"
+  },
+  {
+    "id": 6,
+    "name": "Global Ventures",
+    "industry": "Finance",
+    "location": "London, UK"
+  },
+  {
+    "id": 7,
+    "name": "Green Energy Co.",
+    "industry": "Renewable Energy",
+    "location": "San Francisco, USA"
+  },
+  {
+    "id": 8,
+    "name": "HealthCare Plus",
+    "industry": "Healthcare",
+    "location": "Toronto, Canada"
+  },
+  {
+    "id": 9,
+    "name": "EduTech Innovators",
+    "industry": "Education",
+    "location": "Sydney, Australia"
+  },
+  {
+    "id": 10,
+    "name": "LogiTrans Logistics",
+    "industry": "Logistics",
+    "location": "Rotterdam, Netherlands"
+  }
+]

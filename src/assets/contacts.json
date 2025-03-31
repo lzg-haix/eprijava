@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "fullName": "Marko Brljak",
+    "email": "marko.brljak@example.com",
+    "phone": "+385 91 123 4567",
+    "department": "Sales"
+  },
+  {
+    "id": 2,
+    "fullName": "Dominik Domjanić",
+    "email": "dominik.domjanic@example.com",
+    "phone": "+385 91 234 5678",
+    "department": "Marketing"
+  },
+  {
+    "id": 3,
+    "fullName": "Leon Žganec",
+    "email": "leon.zganec@example.com",
+    "phone": "+385 91 345 6789",
+    "department": "IT"
+  },
+  {
+    "id": 4,
+    "fullName": "Ana Horvat",
+    "email": "ana.horvat@example.com",
+    "phone": "+385 91 456 7890",
+    "department": "Human Resources"
+  },
+  {
+    "id": 5,
+    "fullName": "Ivana Kovačić",
+    "email": "ivana.kovacic@example.com",
+    "phone": "+385 91 567 8901",
+    "department": "Finance"
+  },
+  {
+    "id": 6,
+    "fullName": "Petar Novak",
+    "email": "petar.novak@example.com",
+    "phone": "+385 91 678 9012",
+    "department": "Operations"
+  },
+  {
+    "id": 7,
+    "fullName": "Maja Jurić",
+    "email": "maja.juric@example.com",
+    "phone": "+385 91 789 0123",
+    "department": "Customer Support"
+  },
+  {
+    "id": 8,
+    "fullName": "Luka Perić",
+    "email": "luka.peric@example.com",
+    "phone": "+385 91 890 1234",
+    "department": "Logistics"
+  },
+  {
+    "id": 9,
+    "fullName": "Karla Babić",
+    "email": "karla.babic@example.com",
+    "phone": "+385 91 901 2345",
+    "department": "Legal"
+  },
+  {
+    "id": 10,
+    "fullName": "Ivan Radić",
+    "email": "ivan.radic@example.com",
+    "phone": "+385 91 012 3456",
+    "department": "Engineering"
+  }
+]
