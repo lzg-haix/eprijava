@@ -5,6 +5,7 @@ import registeredCompanies from '../assets/registeredCompanies.json'; // import 
 import SimpleKeyboard from './SimpleKeyboard.vue' // import virtualne tipkovnice - vanjski library
 import visitPurposes from '../assets/visitPurposes.json' // import namjene posjeta
 import contacts from '../assets/contacts.json'; // import kontakt osoba
+import registeredUsers from '../assets/registeredUsers.json'; // Import registered users
 
 // input parametri iz MainPage.vue
 const props = defineProps({
@@ -23,6 +24,7 @@ const props = defineProps({
 })
 
 const input = ref('') // za input virtualne tipkovnice
+const debounceTime = 690 // vrijeme debounce-a za filtriranje
 
 // INPUT HANDLING
 const onChange = (inputValue) => {
@@ -32,27 +34,32 @@ const onChange = (inputValue) => {
   if (step.value === 1) {
     fullName.value = inputValue // sinkronizira s poljem fullName ako je trenutni korak 1
 
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      filterOfflineUsers(inputValue); // Call the filter function for offline users
+    }, debounceTime);
+
   } else if (step.value === 2) {
     companyName.value = inputValue // sinkronizira s poljem companyName ako je trenutni korak 2
 
     clearTimeout(debounceTimeout); // debounce za filtriranje stavki
     debounceTimeout = setTimeout(() => { // možda nepotrebno jer nebude puno upita odjenput
       filterCompanies(inputValue); // ista funkcija za donje korake
-    }, 300);
+    }, debounceTime);
   } else if (step.value === 3) {
     visitPurpose.value = inputValue // sinkronizira s poljem visitPurpose ako je trenutni korak 3
 
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
       filterVisitPurposes(inputValue);
-    }, 300);
+    }, debounceTime);
   } else if (step.value === 4) {
     contactPerson.value = inputValue // sinkronizira s poljem contactPerson ako je trenutni korak 4
 
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
       filterContactPersons(inputValue);
-    }, 300);
+    }, debounceTime);
   }
 }
 
@@ -92,6 +99,20 @@ const filterContactPersons = (query) => {
   );
 };
 
+// Function to filter offline users based on the input
+const filterOfflineUsers = (query) => {
+  if (!query) {
+    filteredUsers.value = [];
+    return;
+  }
+
+  filteredUsers.value = registeredUsers.filter(
+    (user) =>
+      !user.online && // Only offline users
+      user.fullName.toLowerCase().includes(query.toLowerCase()) // Match the input
+  );
+};
+
 // ODABIR
 const selectVisitPurpose = (purpose) => {
   visitPurpose.value = purpose[props.lang] // automatski popuni odabranu namjenu posjeta
@@ -113,6 +134,13 @@ const selectContactPerson = (person) => {
   input.value = person.fullName; // sinkroniziraj s virtualnom tipkovnicom
   filteredContactPersons.value = []; // očisti prijedloge
   selectedContactPerson.value = person; // pohrani cijeli objekt kontakt osobe
+};
+
+// Function to select a user from the suggestions
+const selectUser = (user) => {
+  fullName.value = user.fullName; // Autofill the full name
+  input.value = user.fullName; // Sync with the virtual keyboard
+  filteredUsers.value = []; // Clear the suggestions
 };
 
 const gdprText = computed(() => {
@@ -137,6 +165,7 @@ const filteredContactPersons = ref([]) // array za filtrirane kontakt osobe
 const filteredCompanies = ref([]); // array za filtrirane tvrtke
 const selectedCompany = ref(null); // trenutno odabrana tvrtka
 const filteredVisitPurposes = ref([]) // array za filtrirane namjene posjeta
+const filteredUsers = ref([]); // Array for filtered offline users
 const fullNameInput = ref(null) // referenca na input za ime i prezime
 const companyNameInput = ref(null) // referenca na input za naziv tvrtke
 const visitPurposeInput = ref(null) // referenca na input za namjenu posjeta
@@ -193,7 +222,7 @@ const setAdditionalVisitor = (bool) => { // postavi dodatnog gosta
   nextStep(); // idi na sljedeći korak
 }
 
-// registracija novog korisnika
+// registracija novog korisnika ili ažuriranje postojećeg
 const handleSignUp = () => {
   const newUser = { // novi korisnik
     fullName: fullName.value, // ime i prezime
@@ -203,23 +232,35 @@ const handleSignUp = () => {
     gdprAgreement: gdprAgreement.value, // suglasnost s GDPR-om
     pinCode: pinCode.value, // pin kod
     online: true, // online status
+  };
+
+  // Provjeri postoji li korisnik u registriranim korisnicima
+  const existingUserIndex = registeredUsers.findIndex(
+    (user) => user.fullName === fullName.value && !user.online
+  );
+
+  if (existingUserIndex !== -1) {
+    // Ažuriraj postojećeg korisnika
+    registeredUsers[existingUserIndex] = { ...registeredUsers[existingUserIndex], ...newUser };
+    console.log('User updated:', registeredUsers[existingUserIndex]);
+  } else {
+    // Dodaj novog korisnika
+    props.addUser(newUser);
+    console.log('New user registered:', newUser);
   }
 
-  // dodaj novog korisnika
-  props.addUser(newUser)
+  // Log the updated list of users
+  console.log('Updated users list:', registeredUsers);
 
-  // ispiši novog korisnika u konzolu
-  console.log('New user registered:', newUser)
-
-  // Reset the form for the next user
-  step.value = 1
-  fullName.value = ''
+  // Resetiraj formu za sljedećeg korisnika
+  step.value = 1;
+  fullName.value = '';
   // companyName.value ne resetiramo jer je sljedeći korisnik iz iste tvrtke
-  visitPurpose.value = ''
-  contactPerson.value = ''
-  gdprAgreement.value = false
-  pinCode.value = ''
-}
+  visitPurpose.value = '';
+  contactPerson.value = '';
+  gdprAgreement.value = false;
+  pinCode.value = '';
+};
 
 // fokusiraj input
 const focusInput = () => {
@@ -238,7 +279,7 @@ const focusInput = () => {
 
 // generiranje pin koda
 const generatePinCode = () => {
-  pinCode.value = Math.floor(10000 + Math.random() * 90000).toString() // generiraj random broj od 10000 do 99999
+  pinCode.value = Math.floor(1000 + Math.random() * 9000).toString() // generiraj random broj od 1000 do 9999
 }
 
 // prijevodi
@@ -257,6 +298,11 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
           <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" @onKeyPress="onKeyPress" :input="input" :lang="lang" />
+        <div class="user-suggestions" v-if="filteredUsers.length">
+          <div class="user-card" v-for="user in filteredUsers" :key="user.id" @click="selectUser(user)">
+            {{ user.fullName }}
+          </div>
+        </div>
       </div>
 
       <!-- Step 2: Company Name -->
@@ -646,6 +692,36 @@ button {
 }
 
 .contact-person-card:hover {
+  background-color: #2c3e50;
+  color: #ffffff;
+}
+
+.user-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0;
+  background-color: #2c3e50;
+  padding: 1rem;
+  border-radius: 5px;
+  max-height: 20em;
+  max-width: 100%;
+  overflow-y: auto;
+}
+
+.user-card {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 1rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.user-card:hover {
   background-color: #2c3e50;
   color: #ffffff;
 }
