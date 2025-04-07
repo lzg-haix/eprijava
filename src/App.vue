@@ -2,40 +2,58 @@
 import { ref, onMounted, watch } from 'vue';
 import MainPage from './components/MainPage.vue';
 import 'flag-icons/css/flag-icons.min.css';
-import translations from './assets/translations.json';
+
+import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js.');
+}
 
 let time = ref(''); // Current time
 let welcomeMessage = ref(''); // Welcome message
 let currentLang = ref('hr'); // Default language is Croatian
 let pageTitle = ref(''); // Page title
 let currentTitleKey = ref('welcome'); // Default title key
+let translations = ref({}); // Store translations
+
+// Function to fetch translations dynamically
+const fetchTranslations = async () => {
+  try {
+    const response = await PAS.get('/translations');
+    translations.value = response.data;
+    console.log('Translations fetched successfully:', translations.value);
+  } catch (error) {
+    console.error('Error fetching translations:', error);
+  }
+};
 
 // Function to change the language
 const changeLanguage = (lang) => {
   currentLang.value = lang; // Set the current language
-  if (translations[lang]) {
-    welcomeMessage.value = translations[lang].welcome; // Update the welcome message
+  if (translations.value[lang]) {
+    welcomeMessage.value = translations.value[lang].welcome; // Update the welcome message
     console.log(`Language is now set to ${lang}.`);
+  } else {
+    console.warn(`Translations for language "${lang}" not found.`);
   }
 };
 
-// Function to update the page title based on the translation key
+// funkcija za promjenu naslova na temelju ključa
 const updatePageTitle = (key) => {
-  currentTitleKey.value = key; // Store the current title key
-  if (translations[currentLang.value] && translations[currentLang.value][key]) {
-    pageTitle.value = translations[currentLang.value][key]; // Fetch the translated title
+  currentTitleKey.value = key; // pospremi ključ naslova
+  if (translations.value[currentLang.value] && translations.value[currentLang.value][key]) {
+    pageTitle.value = translations.value[currentLang.value][key]; // dohvati naslov iz prijevoda
     console.log(`Page title updated to: ${pageTitle.value}`);
   } else {
     console.warn(`Translation for key "${key}" not found in language "${currentLang.value}".`);
   }
 };
 
-// Watch for changes in the language and update the page title
+// prati promjenu jezika i ponovno postavi naslov
 watch(currentLang, () => {
-  updatePageTitle(currentTitleKey.value); // Reapply the title with the current key
+  updatePageTitle(currentTitleKey.value);
 });
 
-// Function to update the time
+// funkcija za ažuriranje vremena
 const updateTime = () => {
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
@@ -44,10 +62,11 @@ const updateTime = () => {
   time.value = `${hours}:${minutes}:${seconds}`;
 };
 
-// Set default language and time on component mount
-onMounted(() => {
-  changeLanguage('hr');
-  updatePageTitle('welcome'); // Set the initial page title
+// dohvati prijevode i postavi jezik na hrvatski
+onMounted(async () => {
+  await fetchTranslations(); // dinamički učitaj prijevode
+  changeLanguage('hr'); // postavi jezik na hrvatski
+  updatePageTitle('welcome'); // inicijaliziraj naslov
   updateTime();
   setInterval(updateTime, 1000);
 });
@@ -63,7 +82,7 @@ onMounted(() => {
   </div>
 
   <div class="background-wrapper">
-    <!-- Pass the updatePageTitle function as a prop -->
+    <!-- updatePageTitle ulazi kao prop radi dinamične promjene naslova, ovisno o odabranom koraku -->
     <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle" />
   </div>
   <div class="language-buttons">
