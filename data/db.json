@@ -1,0 +1,417 @@
+{
+  "users": [
+    {
+      "fullName": "John Doe",
+      "companyName": "Example Corp",
+      "visitPurpose": "Business Meeting",
+      "contactPerson": "Jane Smith",
+      "gdprAgreement": true,
+      "pinCode": "1234",
+      "defaultLanguage": "en",
+      "online": false
+    },
+    {
+      "fullName": "Joža Krampus",
+      "companyName": "Šmarnica d.o.o.",
+      "visitPurpose": "Interview",
+      "contactPerson": "Phillip Hoffmann",
+      "gdprAgreement": true,
+      "pinCode": "5678",
+      "defaultLanguage": "hr",
+      "online": true
+    },
+    {
+      "fullName": "Max Mustermann",
+      "companyName": "Musterfirma",
+      "visitPurpose": "Partnership Discussion",
+      "contactPerson": "Anna Müller",
+      "gdprAgreement": true,
+      "pinCode": "9101",
+      "defaultLanguage": "de",
+      "online": true
+    },
+    {
+      "fullName": "Jean Dupont",
+      "companyName": "Entreprise Française",
+      "visitPurpose": "Project Collaboration",
+      "contactPerson": "Marie Curie",
+      "gdprAgreement": true,
+      "pinCode": "1122",
+      "defaultLanguage": "fr",
+      "online": false
+    },
+    {
+      "fullName": "Giovanni Rossi",
+      "companyName": "Soluzioni Italiane",
+      "visitPurpose": "Client Meeting",
+      "contactPerson": "Luca Bianchi",
+      "gdprAgreement": true,
+      "pinCode": "3344",
+      "defaultLanguage": "it",
+      "online": false
+    }
+  ],
+  "companies": [
+    {
+      "id": 1,
+      "name": "Example Corp",
+      "industry": "Technology",
+      "location": "New York, USA"
+    },
+    {
+      "id": 2,
+      "name": "Tech Solutions",
+      "industry": "IT Services",
+      "location": "Zagreb, Croatia"
+    },
+    {
+      "id": 3,
+      "name": "Musterfirma",
+      "industry": "Manufacturing",
+      "location": "Berlin, Germany"
+    },
+    {
+      "id": 4,
+      "name": "Entreprise Française",
+      "industry": "Consulting",
+      "location": "Paris, France"
+    },
+    {
+      "id": 5,
+      "name": "Soluzioni Italiane",
+      "industry": "Design",
+      "location": "Milan, Italy"
+    },
+    {
+      "id": 6,
+      "name": "Global Ventures",
+      "industry": "Finance",
+      "location": "London, UK"
+    },
+    {
+      "id": 7,
+      "name": "Green Energy Co.",
+      "industry": "Renewable Energy",
+      "location": "San Francisco, USA"
+    },
+    {
+      "id": 8,
+      "name": "HealthCare Plus",
+      "industry": "Healthcare",
+      "location": "Toronto, Canada"
+    },
+    {
+      "id": 9,
+      "name": "EduTech Innovators",
+      "industry": "Education",
+      "location": "Sydney, Australia"
+    },
+    {
+      "id": 10,
+      "name": "LogiTrans Logistics",
+      "industry": "Logistics",
+      "location": "Rotterdam, Netherlands"
+    }
+  ],
+  "visitPurposes": [
+    {
+      "id": 1,
+      "en": "Business Meeting",
+      "hr": "Poslovni sastanak",
+      "de": "Geschäftstreffen",
+      "fr": "Réunion d'affaires",
+      "it": "Riunione di lavoro"
+    },
+    {
+      "id": 2,
+      "en": "Interview",
+      "hr": "Intervju",
+      "de": "Vorstellungsgespräch",
+      "fr": "Entretien",
+      "it": "Colloquio"
+    },
+    {
+      "id": 3,
+      "en": "Project Collaboration",
+      "hr": "Suradnja na projektu",
+      "de": "Projektzusammenarbeit",
+      "fr": "Collaboration de projet",
+      "it": "Collaborazione al progetto"
+    },
+    {
+      "id": 4,
+      "en": "Client Meeting",
+      "hr": "Sastanak s klijentom",
+      "de": "Kundentreffen",
+      "fr": "Réunion avec un client",
+      "it": "Incontro con il cliente"
+    },
+    {
+      "id": 5,
+      "en": "Partnership Discussion",
+      "hr": "Rasprava o partnerstvu",
+      "de": "Partnerschaftsdiskussion",
+      "fr": "Discussion de partenariat",
+      "it": "Discussione sulla partnership"
+    }
+  ],
+  "contacts": [
+    {
+      "id": 1,
+      "fullName": "Marko Brljak",
+      "email": "marko.brljak@example.com",
+      "phone": "+385 91 123 4567",
+      "department": "Sales"
+    },
+    {
+      "id": 2,
+      "fullName": "Dominik Domjanić",
+      "email": "dominik.domjanic@example.com",
+      "phone": "+385 91 234 5678",
+      "department": "Marketing"
+    },
+    {
+      "id": 3,
+      "fullName": "Leon Žganec",
+      "email": "leon.zganec@example.com",
+      "phone": "+385 91 345 6789",
+      "department": "IT"
+    },
+    {
+      "id": 4,
+      "fullName": "Ana Horvat",
+      "email": "ana.horvat@example.com",
+      "phone": "+385 91 456 7890",
+      "department": "Human Resources"
+    },
+    {
+      "id": 5,
+      "fullName": "Ivana Kovačić",
+      "email": "ivana.kovacic@example.com",
+      "phone": "+385 91 567 8901",
+      "department": "Finance"
+    },
+    {
+      "id": 6,
+      "fullName": "Petar Novak",
+      "email": "petar.novak@example.com",
+      "phone": "+385 91 678 9012",
+      "department": "Operations"
+    },
+    {
+      "id": 7,
+      "fullName": "Maja Jurić",
+      "email": "maja.juric@example.com",
+      "phone": "+385 91 789 0123",
+      "department": "Customer Support"
+    },
+    {
+      "id": 8,
+      "fullName": "Luka Perić",
+      "email": "luka.peric@example.com",
+      "phone": "+385 91 890 1234",
+      "department": "Logistics"
+    },
+    {
+      "id": 9,
+      "fullName": "Karla Babić",
+      "email": "karla.babic@example.com",
+      "phone": "+385 91 901 2345",
+      "department": "Legal"
+    },
+    {
+      "id": 10,
+      "fullName": "Ivan Radić",
+      "email": "ivan.radic@example.com",
+      "phone": "+385 91 012 3456",
+      "department": "Engineering"
+    }
+  ],
+  "translations": {
+    "en": {
+      "welcome": "Welcome to HAIX",
+      "signUp": "Sign Up",
+      "signIn": "Sign In",
+      "logOut": "Log Out",
+      "fullName": "Full Name",
+      "companyName": "Company Name",
+      "visitPurpose": "Purpose of Visit",
+      "contactPerson": "Contact Person",
+      "gdprAgreement": "GDPR Agreement",
+      "summary": "Summary",
+      "thankYou": "Thank you!",
+      "thankYouMessage": "Your registration has been successfully completed.",
+      "enterPin": "Enter your PIN code:",
+      "welcomeBack": "Welcome back!",
+      "invalidPin": "Invalid PIN. Please try again.",
+      "confirm": "Confirm",
+      "gdprPoints": [
+        "Your data will be stored securely.",
+        "Your data will not be shared with third parties.",
+        "You have the right to access and delete your data.",
+        "You can request a copy of your data at any time.",
+        "We will only use your data for the stated purposes.",
+        "You can withdraw your consent at any time."
+      ],
+      "agreeToGdpr": "I agree to the GDPR rules",
+      "next": "Next",
+      "finish": "Finish",
+      "back": "Back",
+      "summaryPinCode": "PIN Code:",
+      "badgePrinting": "Your badge is being printed...",
+      "additionalVisitor": "Is there another visitor from the same company?",
+      "additionalVisitorPrompt": "If yes, we will restart the process for the new visitor, skipping the company selection step.",
+      "yes": "Yes",
+      "no": "No",
+      "placeholderPin": "4-digit PIN"
+    },
+    "hr": {
+      "welcome": "Dobrodošli u HAIX",
+      "signUp": "Registracija",
+      "signIn": "Prijava",
+      "logOut": "Odjava",
+      "fullName": "Puno ime",
+      "companyName": "Naziv tvrtke",
+      "visitPurpose": "Svrha posjeta",
+      "contactPerson": "Kontakt osoba",
+      "gdprAgreement": "GDPR sporazum",
+      "summary": "Sažetak",
+      "thankYou": "Hvala!",
+      "thankYouMessage": "Vaša registracija je uspješno dovršena.",
+      "enterPin": "Unesite svoj PIN kod:",
+      "welcomeBack": "Dobrodošli nazad!",
+      "invalidPin": "Neispravan PIN. Molimo pokušajte ponovno.",
+      "confirm": "Potvrdi",
+      "gdprPoints": [
+        "Vaši podaci će biti pohranjeni sigurno.",
+        "Vaši podaci neće biti dijeljeni s trećim stranama.",
+        "Imate pravo pristupa i brisanja svojih podataka.",
+        "Možete zatražiti kopiju svojih podataka u bilo kojem trenutku.",
+        "Vaši podaci će se koristiti samo za navedene svrhe.",
+        "Svoj pristanak možete povući u bilo kojem trenutku."
+      ],
+      "agreeToGdpr": "Slažem se s GDPR pravilima",
+      "next": "Dalje",
+      "finish": "Završi",
+      "back": "Natrag",
+      "summaryPinCode": "PIN kod:",
+      "badgePrinting": "Vaša oznaka se ispisuje...",
+      "additionalVisitor": "Postoji li još jedan posjetitelj iz iste tvrtke?",
+      "additionalVisitorPrompt": "Ako da, ponovno ćemo pokrenuti postupak za novog posjetitelja, preskačući korak odabira tvrtke.",
+      "yes": "Da",
+      "no": "Ne",
+      "placeholderPin": "4-znamenkasti PIN"
+    },
+    "de": {
+      "welcome": "Willkommen bei HAIX",
+      "signUp": "Anmelden",
+      "signIn": "Einloggen",
+      "logOut": "Ausloggen",
+      "fullName": "Vollständiger Name",
+      "companyName": "Firmenname",
+      "visitPurpose": "Zweck des Besuchs",
+      "contactPerson": "Kontaktperson",
+      "gdprAgreement": "DSGVO-Vereinbarung",
+      "summary": "Zusammenfassung",
+      "thankYou": "Vielen Dank!",
+      "thankYouMessage": "Ihre Registrierung wurde erfolgreich abgeschlossen.",
+      "enterPin": "Geben Sie Ihren PIN-Code ein:",
+      "welcomeBack": "Willkommen zurück!",
+      "invalidPin": "Ungültiger PIN. Bitte versuchen Sie es erneut.",
+      "confirm": "Bestätigen",
+      "gdprPoints": [
+        "Ihre Daten werden sicher gespeichert.",
+        "Ihre Daten werden nicht an Dritte weitergegeben.",
+        "Sie haben das Recht, auf Ihre Daten zuzugreifen und sie zu löschen.",
+        "Sie können jederzeit eine Kopie Ihrer Daten anfordern.",
+        "Wir verwenden Ihre Daten nur für die angegebenen Zwecke.",
+        "Sie können Ihre Einwilligung jederzeit widerrufen."
+      ],
+      "agreeToGdpr": "Ich stimme den DSGVO-Regeln zu",
+      "next": "Weiter",
+      "finish": "Fertig",
+      "back": "Zurück",
+      "summaryPinCode": "PIN-Code:",
+      "badgePrinting": "Ihr Abzeichen wird gedruckt...",
+      "additionalVisitor": "Gibt es einen weiteren Besucher aus derselben Firma?",
+      "additionalVisitorPrompt": "Wenn ja, werden wir den Prozess für den neuen Besucher neu starten und den Schritt der Firmenauswahl überspringen.",
+      "yes": "Ja",
+      "no": "Nein",
+      "placeholderPin": "4-stellige PIN"
+    },
+    "fr": {
+      "welcome": "Bienvenue chez HAIX",
+      "signUp": "S'inscrire",
+      "signIn": "Se connecter",
+      "logOut": "Se déconnecter",
+      "fullName": "Nom complet",
+      "companyName": "Nom de l'entreprise",
+      "visitPurpose": "Objet de la visite",
+      "contactPerson": "Personne de contact",
+      "gdprAgreement": "Accord RGPD",
+      "summary": "Résumé",
+      "thankYou": "Merci!",
+      "thankYouMessage": "Votre inscription a été complétée avec succès.",
+      "enterPin": "Entrez votre code PIN:",
+      "welcomeBack": "Bon retour!",
+      "invalidPin": "Code PIN invalide. Veuillez réessayer.",
+      "confirm": "Confirmer",
+      "gdprPoints": [
+        "Vos données seront stockées en toute sécurité.",
+        "Vos données ne seront pas partagées avec des tiers.",
+        "Vous avez le droit d'accéder à vos données et de les supprimer.",
+        "Vous pouvez demander une copie de vos données à tout moment.",
+        "Nous utiliserons vos données uniquement à des fins déclarées.",
+        "Vous pouvez retirer votre consentement à tout moment."
+      ],
+      "agreeToGdpr": "J'accepte les règles RGPD",
+      "next": "Suivant",
+      "finish": "Terminer",
+      "back": "Retour",
+      "summaryPinCode": "Code PIN:",
+      "badgePrinting": "Votre badge est en cours d'impression...",
+      "additionalVisitor": "Y a-t-il un autre visiteur de la même entreprise?",
+      "additionalVisitorPrompt": "Si oui, nous recommencerons le processus pour le nouveau visiteur, en sautant l'étape de sélection de l'entreprise.",
+      "yes": "Oui",
+      "no": "Non",
+      "placeholderPin": "Code PIN"
+    },
+    "it": {
+      "welcome": "Benvenuti a HAIX",
+      "signUp": "Iscriviti",
+      "signIn": "Accedi",
+      "logOut": "Disconnettersi",
+      "fullName": "Nome completo",
+      "companyName": "Nome dell'azienda",
+      "visitPurpose": "Scopo della visita",
+      "contactPerson": "Persona di contatto",
+      "gdprAgreement": "Accordo GDPR",
+      "summary": "Sommario",
+      "thankYou": "Grazie!",
+      "thankYouMessage": "La tua registrazione è stata completata con successo.",
+      "enterPin": "Inserisci il tuo codice PIN:",
+      "welcomeBack": "Bentornato!",
+      "invalidPin": "PIN non valido. Per favore riprova.",
+      "confirm": "Conferma",
+      "gdprPoints": [
+        "I tuoi dati saranno conservati in modo sicuro.",
+        "I tuoi dati non saranno condivisi con terze parti.",
+        "Hai il diritto di accedere ai tuoi dati e di eliminarli.",
+        "Puoi richiedere una copia dei tuoi dati in qualsiasi momento.",
+        "Utilizzeremo i tuoi dati solo per gli scopi dichiarati.",
+        "Puoi revocare il tuo consenso in qualsiasi momento."
+      ],
+      "agreeToGdpr": "Accetto le regole GDPR",
+      "next": "Avanti",
+      "finish": "Finire",
+      "back": "Indietro",
+      "summaryPinCode": "Codice PIN:",
+      "badgePrinting": "Il tuo badge è in fase di stampa...",
+      "additionalVisitor": "C'è un altro visitatore della stessa azienda?",
+      "additionalVisitorPrompt": "Se sì, riavvieremo il processo per il nuovo visitatore, saltando il passaggio di selezione dell'azienda.",
+      "yes": "Sì",
+      "no": "No",
+      "placeholderPin": "PIN a 4 cifre"
+    }
+  }
+}

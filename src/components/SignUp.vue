@@ -147,12 +147,6 @@ const gdprText = computed(() => {
   return translations[props.lang]?.gdprPoints || translations['en'].gdprPoints; // povratak na engleski ako jezik nije pronađen
 });
 
-// zastara, koristi se za testiranje
-// funkcija za obradu pritiska tipke, služi za testiranje
-const onKeyPress = (key) => {
-  // console.log('Key pressed:', key)
-}
-
 // DEFINICIJE
 const step = ref(1) // trenutni korak
 const fullName = ref('') // ime i prezime
@@ -242,15 +236,15 @@ const handleSignUp = () => {
   if (existingUserIndex !== -1) {
     // Ažuriraj postojećeg korisnika
     registeredUsers[existingUserIndex] = { ...registeredUsers[existingUserIndex], ...newUser };
-    console.log('User updated:', registeredUsers[existingUserIndex]);
+    // console.log('User updated:', registeredUsers[existingUserIndex]);
   } else {
     // Dodaj novog korisnika
     props.addUser(newUser);
-    console.log('New user registered:', newUser);
+    // console.log('New user registered:', newUser);
   }
 
   // Log the updated list of users
-  console.log('Updated users list:', registeredUsers);
+  // console.log('Updated users list:', registeredUsers);
 
   // Resetiraj formu za sljedećeg korisnika
   step.value = 1;
@@ -297,7 +291,7 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
           <input type="text" id="fullName" v-model="fullName" ref="fullNameInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
         </div>
-        <SimpleKeyboard @onChange="onChange" @onKeyPress="onKeyPress" :input="input" :lang="lang" />
+        <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="user-suggestions" v-if="filteredUsers.length">
           <div class="user-card" v-for="user in filteredUsers" :key="user.id" @click="selectUser(user)">
             {{ user.fullName }}
@@ -313,7 +307,7 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
           <input type="text" id="companyName" v-model="companyName" ref="companyNameInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
         </div>
-        <SimpleKeyboard @onChange="onChange" @onKeyPress="onKeyPress" :input="input" :lang="lang" />
+        <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="company-suggestions" v-if="filteredCompanies.length">
           <div class="company-card" v-for="company in filteredCompanies" :key="company.id"
             @click="selectCompany(company)">
@@ -330,7 +324,7 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
           <input type="text" id="visitPurpose" v-model="visitPurpose" ref="visitPurposeInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
         </div>
-        <SimpleKeyboard @onChange="onChange" @onKeyPress="onKeyPress" :input="input" :lang="lang" />
+        <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="visit-purpose-suggestions" v-if="filteredVisitPurposes.length">
           <div class="visit-purpose-card" v-for="purpose in filteredVisitPurposes" :key="purpose.id"
             @click="selectVisitPurpose(purpose)">
@@ -348,7 +342,7 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
           <button class="confirm-button" type="submit">
             {{ step < 6 ? t.next : t.finish }} </button>
         </div>
-        <SimpleKeyboard @onChange="onChange" @onKeyPress="onKeyPress" :input="input" :lang="lang" />
+        <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="contact-person-suggestions" v-if="filteredContactPersons.length">
           <div class="contact-person-card" v-for="person in filteredContactPersons" :key="person.id"
             @click="selectContactPerson(person)">

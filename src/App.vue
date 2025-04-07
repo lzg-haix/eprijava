@@ -1,75 +1,121 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import MainPage from './components/MainPage.vue'
-import 'flag-icons/css/flag-icons.min.css' // za ikone zastava
-import translations from './assets/translations.json' // za prijevode
+import { ref, onMounted, watch } from 'vue';
+import MainPage from './components/MainPage.vue';
+import 'flag-icons/css/flag-icons.min.css';
+import translations from './assets/translations.json';
 
-let time = ref('') // trenutno vrijeme
-let welcomeMessage = ref('') // poruka dobrodošlice
-let currentLang = ref('hr') // zadani jezik je hrvatski
+let time = ref(''); // Current time
+let welcomeMessage = ref(''); // Welcome message
+let currentLang = ref('hr'); // Default language is Croatian
+let pageTitle = ref(''); // Page title
+let currentTitleKey = ref('welcome'); // Default title key
 
-// funkcija za promjenu jezika
+// Function to change the language
 const changeLanguage = (lang) => {
-  currentLang.value = lang // postavlja trenutni jezik na odabrani jezik
-  // provjerava postoji li prijevod za zadani jezik u objektu translations
+  currentLang.value = lang; // Set the current language
   if (translations[lang]) {
-    // ako postoji, postavlja vrijednost welcomeMessage na prijevod za zadani jezik
-    welcomeMessage.value = translations[lang].welcome
-    console.log(`Language is now set to ${lang}.`)
+    welcomeMessage.value = translations[lang].welcome; // Update the welcome message
+    console.log(`Language is now set to ${lang}.`);
   }
-}
+};
 
-// funkcija za ažuriranje vremena
+// Function to update the page title based on the translation key
+const updatePageTitle = (key) => {
+  currentTitleKey.value = key; // Store the current title key
+  if (translations[currentLang.value] && translations[currentLang.value][key]) {
+    pageTitle.value = translations[currentLang.value][key]; // Fetch the translated title
+    console.log(`Page title updated to: ${pageTitle.value}`);
+  } else {
+    console.warn(`Translation for key "${key}" not found in language "${currentLang.value}".`);
+  }
+};
+
+// Watch for changes in the language and update the page title
+watch(currentLang, () => {
+  updatePageTitle(currentTitleKey.value); // Reapply the title with the current key
+});
+
+// Function to update the time
 const updateTime = () => {
-  const now = new Date() // trenutni datum i vrijeme
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const seconds = String(now.getSeconds()).padStart(2, '0')
-  time.value = `${hours}:${minutes}:${seconds}`
-}
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  time.value = `${hours}:${minutes}:${seconds}`;
+};
 
-// postavlja zadani jezik na hrvatski prilikom montiranja komponente
+// Set default language and time on component mount
 onMounted(() => {
-  changeLanguage('hr') // postavlja jezik na hrvatski
-  updateTime() // postavlja trenutno vrijeme
-  setInterval(updateTime, 1000) // ažurira vrijeme svake sekunde
-})
-
+  changeLanguage('hr');
+  updatePageTitle('welcome'); // Set the initial page title
+  updateTime();
+  setInterval(updateTime, 1000);
+});
 </script>
 
 <template>
   <div class="page-header">
     <div class="clock">{{ time }}</div>
+    <div class="page-title">{{ pageTitle }}</div>
     <div class="logo">
       <img alt="HAIX logo" src="../src/assets/HAIX_group_blau.png" width="300" height="69" />
     </div>
   </div>
 
   <div class="background-wrapper">
-    <MainPage :msg="welcomeMessage" :lang="currentLang" />
+    <!-- Pass the updatePageTitle function as a prop -->
+    <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle" />
   </div>
   <div class="language-buttons">
-    <button :class="{ selected: currentLang === 'en' }" @click="() => changeLanguage('en')"><span
-        class="fi fi-gb"></span> EN</button>
-    <button :class="{ selected: currentLang === 'hr' }" @click="() => changeLanguage('hr')"><span
-        class="fi fi-hr"></span> HR</button>
-    <button :class="{ selected: currentLang === 'de' }" @click="() => changeLanguage('de')"><span
-        class="fi fi-de"></span> DE</button>
-    <button :class="{ selected: currentLang === 'fr' }" @click="() => changeLanguage('fr')"><span
-        class="fi fi-fr"></span> FR</button>
-    <button :class="{ selected: currentLang === 'it' }" @click="() => changeLanguage('it')"><span
-        class="fi fi-it"></span> IT</button>
+    <button :class="{ selected: currentLang === 'en' }" @click="() => changeLanguage('en')">
+      <span class="fi fi-gb"></span> EN
+    </button>
+    <button :class="{ selected: currentLang === 'hr' }" @click="() => changeLanguage('hr')">
+      <span class="fi fi-hr"></span> HR
+    </button>
+    <button :class="{ selected: currentLang === 'de' }" @click="() => changeLanguage('de')">
+      <span class="fi fi-de"></span> DE
+    </button>
+    <button :class="{ selected: currentLang === 'fr' }" @click="() => changeLanguage('fr')">
+      <span class="fi fi-fr"></span> FR
+    </button>
+    <button :class="{ selected: currentLang === 'it' }" @click="() => changeLanguage('it')">
+      <span class="fi fi-it"></span> IT
+    </button>
   </div>
 </template>
 
 <style scoped>
 .page-header {
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
+  flex-flow: row nowrap;
   justify-content: space-between;
-  padding: 0.2rem 3rem;
-  margin-top: 1rem;
+  align-items: center;
+  gap: 15%;
+}
+
+.clock {
+  order: 1;
+  width: 33%;
+  text-align: center;
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.page-title {
+  font-size: 2em;
+  color: #2c3e50;
+  font-weight: bold;
+  order: 2;
+  width: 33%;
+  text-align: center;
+}
+
+.logo {
+  order: 3;
+  width: 33%;
+  display: flex;
+  justify-content: center;
 }
 
 .language-buttons {
@@ -106,19 +152,6 @@ onMounted(() => {
   z-index: 2;
   box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.2);
   border-radius: 0 0 0.2em 0.2em;
-}
-
-.logo {
-  position: absolute;
-  right: 3em;
-  top: 1px;
-  z-index: 1;
-}
-
-.clock {
-  text-align: center;
-  font-size: 2em;
-  position: relative;
 }
 
 .background-wrapper {
