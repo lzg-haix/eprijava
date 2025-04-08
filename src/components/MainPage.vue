@@ -6,15 +6,22 @@ import LogIn from './LogIn.vue'
 import LogOut from './LogOut.vue'
 import registeredUsers from '../assets/registeredUsers.json'
 
+import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js.');
+} else {
+  console.log('PAS instanca povezana.');
+}
+
 const props = defineProps({
-  msg: String, // Welcome message
-  lang: String, // Current language
-  updatePageTitle: Function, // Function to update the page title
+  msg: String, // poruka dobrodošlice
+  lang: String, // trenutni jezik
+  updatePageTitle: Function, // funkcija za ažuriranje naslova stranice
 })
 
-const currentView = ref(0); // Tracks the current view
+const currentView = ref(0); // pratimo trenutni prikaz
 
-// registrirani korisnici
+// registrirani korisnici - obsoletno - dohvaća se preko PAS-a
 const users = ref([...registeredUsers])
 
 // dodaj novog korisnika
@@ -50,8 +57,6 @@ const showView = (view, titleKey) => {
     <LogIn v-else-if="currentView === 2" :lang="lang" />
     <LogOut v-else-if="currentView === 3" />
   </div>
-  <div id="app">
-  </div>
 </template>
 
 <style scoped>
@@ -80,7 +85,7 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 11em;
+  gap: 7.5em;
   margin-top: 5.5rem;
 }
 

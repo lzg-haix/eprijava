@@ -6,34 +6,36 @@ import 'flag-icons/css/flag-icons.min.css';
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
   console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js.');
+} else {
+  console.log('PAS instanca povezana.');
 }
 
-let time = ref(''); // Current time
-let welcomeMessage = ref(''); // Welcome message
-let currentLang = ref('hr'); // Default language is Croatian
-let pageTitle = ref(''); // Page title
-let currentTitleKey = ref('welcome'); // Default title key
-let translations = ref({}); // Store translations
+let time = ref(''); // trenutno vrijeme
+let welcomeMessage = ref(''); // poruka dobrodošlice
+let currentLang = ref('hr'); // defaultni jezik je hrvatski
+let pageTitle = ref('Dobardan'); // naslov stranice
+let currentTitleKey = ref('welcome'); // defaultni ključ naslova
+let translations = ref({}); // prijevodi
 
-// Function to fetch translations dynamically
+// dohvaćanje prijevoda preko API-ja
 const fetchTranslations = async () => {
   try {
     const response = await PAS.get('/translations');
     translations.value = response.data;
-    console.log('Translations fetched successfully:', translations.value);
+    console.log('Prijevodi uspješno dohvaćeni:', translations.value);
   } catch (error) {
-    console.error('Error fetching translations:', error);
+    console.error('Došlo je do greške kod dohvaćanja prijevoda:', error);
   }
 };
 
-// Function to change the language
+// promjena jezika
 const changeLanguage = (lang) => {
-  currentLang.value = lang; // Set the current language
+  currentLang.value = lang; // postavi trenutni jezik
   if (translations.value[lang]) {
-    welcomeMessage.value = translations.value[lang].welcome; // Update the welcome message
-    console.log(`Language is now set to ${lang}.`);
+    welcomeMessage.value = translations.value[lang].welcome; // apdejtaj poruku dobrodošlice
+    console.log(`Jezik je postavljen na "${lang}".`);
   } else {
-    console.warn(`Translations for language "${lang}" not found.`);
+    console.warn(`Prijevod za jezik "${lang}" nije pronađen.`); // upozorenje ako jezik nije podržan
   }
 };
 
@@ -42,9 +44,9 @@ const updatePageTitle = (key) => {
   currentTitleKey.value = key; // pospremi ključ naslova
   if (translations.value[currentLang.value] && translations.value[currentLang.value][key]) {
     pageTitle.value = translations.value[currentLang.value][key]; // dohvati naslov iz prijevoda
-    console.log(`Page title updated to: ${pageTitle.value}`);
+    console.log(`Naslov promijenjen: ${pageTitle.value}`);
   } else {
-    console.warn(`Translation for key "${key}" not found in language "${currentLang.value}".`);
+    console.warn(`Prijevod s ključem "${key}" nije pronađen u jeziku "${currentLang.value}".`);
   }
 };
 
