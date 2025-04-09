@@ -13,9 +13,25 @@ if (!PAS) {
 let time = ref(''); // trenutno vrijeme
 let welcomeMessage = ref(''); // poruka dobrodošlice
 let currentLang = ref('hr'); // defaultni jezik je hrvatski
-let pageTitle = ref('Dobardan'); // naslov stranice
+let pageTitle = ref(''); // naslov stranice
 let currentTitleKey = ref('welcome'); // defaultni ključ naslova
 let translations = ref({}); // prijevodi
+let languages = ref([]); // jezici
+
+
+// Dohvaćanje jezika preko API-ja
+const fetchLanguages = async () => {
+  try {
+    const response = await PAS.get('/languages'); // Dohvati jezike iz db.json
+    // Filtriraj samo aktivne jezike i sortiraj prema redoslijedu
+    languages.value = response.data
+      .filter((language) => language.active) // Uključi samo aktivne jezike
+      .sort((a, b) => a.order - b.order); // Sortiraj prema redoslijedu
+    console.log('Aktivni jezici uspješno dohvaćeni:', languages.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja jezika:', error);
+  }
+};
 
 // dohvaćanje prijevoda preko API-ja
 const fetchTranslations = async () => {
@@ -44,7 +60,7 @@ const updatePageTitle = (key) => {
   currentTitleKey.value = key; // pospremi ključ naslova
   if (translations.value[currentLang.value] && translations.value[currentLang.value][key]) {
     pageTitle.value = translations.value[currentLang.value][key]; // dohvati naslov iz prijevoda
-    console.log(`Naslov promijenjen: ${pageTitle.value}`);
+    //console.log(`Naslov promijenjen: ${pageTitle.value}`);
   } else {
     console.warn(`Prijevod s ključem "${key}" nije pronađen u jeziku "${currentLang.value}".`);
   }
@@ -66,6 +82,7 @@ const updateTime = () => {
 
 // dohvati prijevode i postavi jezik na hrvatski
 onMounted(async () => {
+  await fetchLanguages(); // Dinamički učitaj jezike
   await fetchTranslations(); // dinamički učitaj prijevode
   changeLanguage('hr'); // postavi jezik na hrvatski
   updatePageTitle('welcome'); // inicijaliziraj naslov
@@ -88,20 +105,9 @@ onMounted(async () => {
     <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle" />
   </div>
   <div class="language-buttons">
-    <button :class="{ selected: currentLang === 'en' }" @click="() => changeLanguage('en')">
-      <span class="fi fi-gb"></span> EN
-    </button>
-    <button :class="{ selected: currentLang === 'hr' }" @click="() => changeLanguage('hr')">
-      <span class="fi fi-hr"></span> HR
-    </button>
-    <button :class="{ selected: currentLang === 'de' }" @click="() => changeLanguage('de')">
-      <span class="fi fi-de"></span> DE
-    </button>
-    <button :class="{ selected: currentLang === 'fr' }" @click="() => changeLanguage('fr')">
-      <span class="fi fi-fr"></span> FR
-    </button>
-    <button :class="{ selected: currentLang === 'it' }" @click="() => changeLanguage('it')">
-      <span class="fi fi-it"></span> IT
+    <button v-for="language in languages" :key="language.code" :class="{ selected: currentLang === language.code }"
+      @click="() => changeLanguage(language.code)">
+      <span :class="language.flag"></span> {{ language.name }}
     </button>
   </div>
 </template>

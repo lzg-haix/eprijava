@@ -413,5 +413,77 @@
       "no": "No",
       "placeholderPin": "PIN a 4 cifre"
     }
-  }
+  },
+  "languages": [
+    {
+      "code": "en",
+      "name": "EN",
+      "flag": "fi fi-gb",
+      "order": 1,
+      "active": true
+    },
+    {
+      "code": "hr",
+      "name": "HR",
+      "flag": "fi fi-hr",
+      "order": 2,
+      "active": true
+    },
+    {
+      "code": "de",
+      "name": "DE",
+      "flag": "fi fi-de",
+      "order": 3,
+      "active": true
+    },
+    {
+      "code": "fr",
+      "name": "FR",
+      "flag": "fi fi-fr",
+      "order": 4,
+      "active": true
+    },
+    {
+      "code": "it",
+      "name": "IT",
+      "flag": "fi fi-it",
+      "order": 5,
+      "active": true
+    },
+    {
+      "code": "es",
+      "name": "ES",
+      "flag": "fi fi-es",
+      "order": 6,
+      "active": false
+    },
+    {
+      "code": "pt",
+      "name": "PT",
+      "flag": "fi fi-pt",
+      "order": 7,
+      "active": false
+    },
+    {
+      "code": "nl",
+      "name": "NL",
+      "flag": "fi fi-nl",
+      "order": 8,
+      "active": false
+    },
+    {
+      "code": "pl",
+      "name": "PL",
+      "flag": "fi fi-pl",
+      "order": 9,
+      "active": false
+    },
+    {
+      "code": "ru",
+      "name": "RU",
+      "flag": "fi fi-ru",
+      "order": 10,
+      "active": false
+    }
+  ]
 }
