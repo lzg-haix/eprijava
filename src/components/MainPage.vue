@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
-import translations from '../assets/translations.json'
+import { ref, onMounted, computed } from 'vue'
 import SignUp from './SignUp.vue'
 import LogIn from './LogIn.vue'
 import LogOut from './LogOut.vue'
@@ -10,14 +9,63 @@ import { PAS } from '@/utils/pas-util';
 if (!PAS) {
   console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js.');
 } else {
-  console.log('PAS instanca povezana.');
+  // console.log('PAS instanca povezana.');
 }
 
 const props = defineProps({
   msg: String, // poruka dobrodošlice
   lang: String, // trenutni jezik
   updatePageTitle: Function, // funkcija za ažuriranje naslova stranice
+  translations: Object, // prijevodi proslijeđeni iz App.vue
 })
+
+let allUsers = ref([]) // svi korisnici
+let onlineUsers = ref([]) // online korisnici
+let offlineUsers = ref([]) // offline korisnici, proslijeđuju se na registraciju i prijavu
+
+// dohvaćanje svih korisnika preko API-ja
+const fetchAllUsers = async () => {
+  try {
+    const response = await PAS.get('/users'); // Dohvati sve korisnike iz db.json
+    allUsers.value = response.data; // Spremi sve korisnike
+    console.log('Svi korisnici uspješno dohvaćeni:', allUsers.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja svih korisnika:', error);
+  }
+};
+
+// filtriranje online korisnika
+const filterOnlineUsers = async () => {
+  try {
+    // filtriraj online korisnike iz već dohvaćenih korisnika
+    onlineUsers.value = allUsers.value.filter(user => user.online);
+    console.log('Online korisnici uspješno filtrirani:', onlineUsers.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod filtriranja online korisnika:', error);
+  }
+};
+
+// filtriranje offline korisnika
+const filterOfflineUsers = async () => {
+  try {
+    // filtriraj offline korisnike iz već dohvaćenih korisnika
+    offlineUsers.value = allUsers.value.filter(user => !user.online);
+    console.log('Offline korisnici uspješno filtrirani:', offlineUsers.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod filtriranja offline korisnika:', error);
+  }
+};
+
+// konsolidirani poziv za metode za dohvaćanje i filtriranje korisnika
+const getUsers = async () => { // pri montiranju komponente
+  try {
+    await fetchAllUsers(); // dohvaćanje svih korisnika
+    await filterOnlineUsers(); // filtriranje online korisnika
+    await filterOfflineUsers(); // filtriranje offline korisnika
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja svih korisnika:', error);
+  }
+}
 
 const currentView = ref(0); // pratimo trenutni prikaz
 
@@ -29,13 +77,12 @@ const addUser = (newUser) => {
   users.value.push(newUser)
   console.log('New user added:', newUser)
   console.log('Updated list of users:', users.value)
-  console.log('Online Users:', onlineUsers.value)
-    ;
+  console.log('Online Users:', onlineUsers.value);
 }
 
-const onlineUsers = computed(() => { // prikaži samo korisnike koji su online
-  return users.value.filter(user => user.online);
-});
+// const onlineUsers = computed(() => { // prikaži samo korisnike koji su online
+//   return users.value.filter(user => user.online);
+// });
 
 // Show a specific view and update the page title
 const showView = (view, titleKey) => {
@@ -43,14 +90,19 @@ const showView = (view, titleKey) => {
   props.updatePageTitle(titleKey); // Pass the translation key to update the title
 };
 
+onMounted(async () => {
+  // potegne i filtrira korisnike
+  await getUsers();
+});
+
 </script>
 
 <template>
   <div class="greetings">
     <div class="button-container" v-if="currentView === 0">
-      <button @click="showView(1, 'signUp')">{{ translations[lang].signUp }}</button>
-      <button @click="showView(2, 'signIn')">{{ translations[lang].signIn }}</button>
-      <button @click="showView(3, 'logOut')">{{ translations[lang].logOut }}</button>
+      <button @click="showView(1, 'signUp')">{{ translations[lang]?.signUp }}</button>
+      <button @click="showView(2, 'signIn')">{{ translations[lang]?.signIn }}</button>
+      <button @click="showView(3, 'logOut')">{{ translations[lang]?.logOut }}</button>
     </div>
     <SignUp v-else-if="currentView === 1" :lang="lang" :addUser="addUser"
       :goToMainPage="() => showView(0, 'welcome')" />
@@ -85,7 +137,7 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7.5em;
+  gap: 10em;
   margin-top: 5.5rem;
 }
 

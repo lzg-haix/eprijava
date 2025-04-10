@@ -7,7 +7,7 @@ import { PAS } from '@/utils/pas-util';
 if (!PAS) {
   console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js.');
 } else {
-  console.log('PAS instanca povezana.');
+  // console.log('PAS instanca povezana.');
 }
 
 let time = ref(''); // trenutno vrijeme
@@ -18,15 +18,14 @@ let currentTitleKey = ref('welcome'); // defaultni ključ naslova
 let translations = ref({}); // prijevodi
 let languages = ref([]); // jezici
 
-
-// Dohvaćanje jezika preko API-ja
+// dohvaćanje jezika preko API-ja
 const fetchLanguages = async () => {
   try {
-    const response = await PAS.get('/languages'); // Dohvati jezike iz db.json
-    // Filtriraj samo aktivne jezike i sortiraj prema redoslijedu
+    const response = await PAS.get('/languages'); // dohvati jezike
+    // filtriraj samo aktivne jezike i sortiraj prema redoslijedu
     languages.value = response.data
-      .filter((language) => language.active) // Uključi samo aktivne jezike
-      .sort((a, b) => a.order - b.order); // Sortiraj prema redoslijedu
+      .filter((language) => language.active) // uključi samo aktivne jezike
+      .sort((a, b) => a.order - b.order); // sortiraj prema redoslijedu
     console.log('Aktivni jezici uspješno dohvaćeni:', languages.value);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja jezika:', error);
@@ -49,7 +48,7 @@ const changeLanguage = (lang) => {
   currentLang.value = lang; // postavi trenutni jezik
   if (translations.value[lang]) {
     welcomeMessage.value = translations.value[lang].welcome; // apdejtaj poruku dobrodošlice
-    console.log(`Jezik je postavljen na "${lang}".`);
+    // console.log(`Jezik je postavljen na "${lang}".`);
   } else {
     console.warn(`Prijevod za jezik "${lang}" nije pronađen.`); // upozorenje ako jezik nije podržan
   }
@@ -82,8 +81,8 @@ const updateTime = () => {
 
 // dohvati prijevode i postavi jezik na hrvatski
 onMounted(async () => {
-  await fetchLanguages(); // Dinamički učitaj jezike
-  await fetchTranslations(); // dinamički učitaj prijevode
+  await fetchLanguages(); // učitaj jezike
+  await fetchTranslations(); // učitaj prijevode
   changeLanguage('hr'); // postavi jezik na hrvatski
   updatePageTitle('welcome'); // inicijaliziraj naslov
   updateTime();
@@ -101,8 +100,8 @@ onMounted(async () => {
   </div>
 
   <div class="background-wrapper">
-    <!-- updatePageTitle ulazi kao prop radi dinamične promjene naslova, ovisno o odabranom koraku -->
-    <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle" />
+    <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle"
+      :translations="translations" />
   </div>
   <div class="language-buttons">
     <button v-for="language in languages" :key="language.code" :class="{ selected: currentLang === language.code }"
