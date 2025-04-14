@@ -120,7 +120,8 @@
       "hr": "Poslovni sastanak",
       "de": "Geschäftstreffen",
       "fr": "Réunion d'affaires",
-      "it": "Riunione di lavoro"
+      "it": "Riunione di lavoro",
+      "favourite": true
     },
     {
       "id": 2,
@@ -128,7 +129,8 @@
       "hr": "Intervju",
       "de": "Vorstellungsgespräch",
       "fr": "Entretien",
-      "it": "Colloquio"
+      "it": "Colloquio",
+      "favourite": true
     },
     {
       "id": 3,
@@ -136,7 +138,8 @@
       "hr": "Suradnja na projektu",
       "de": "Projektzusammenarbeit",
       "fr": "Collaboration de projet",
-      "it": "Collaborazione al progetto"
+      "it": "Collaborazione al progetto",
+      "favourite": true
     },
     {
       "id": 4,
@@ -144,7 +147,8 @@
       "hr": "Sastanak s klijentom",
       "de": "Kundentreffen",
       "fr": "Réunion avec un client",
-      "it": "Incontro con il cliente"
+      "it": "Incontro con il cliente",
+      "favourite": true
     },
     {
       "id": 5,
@@ -152,7 +156,53 @@
       "hr": "Rasprava o partnerstvu",
       "de": "Partnerschaftsdiskussion",
       "fr": "Discussion de partenariat",
-      "it": "Discussione sulla partnership"
+      "it": "Discussione sulla partnership",
+      "favourite": true
+    },
+    {
+      "id": 6,
+      "en": "Training Session",
+      "hr": "Trening",
+      "de": "Schulung",
+      "fr": "Session de formation",
+      "it": "Sessione di formazione",
+      "favourite": false
+    },
+    {
+      "id": 7,
+      "en": "Product Demonstration",
+      "hr": "Demonstracija proizvoda",
+      "de": "Produktvorführung",
+      "fr": "Démonstration de produit",
+      "it": "Dimostrazione del prodotto",
+      "favourite": false
+    },
+    {
+      "id": 8,
+      "en": "Networking Event",
+      "hr": "Umrežavanje",
+      "de": "Netzwerkveranstaltung",
+      "fr": "Événement de réseautage",
+      "it": "Evento di networking",
+      "favourite": false
+    },
+    {
+      "id": 9,
+      "en": "Workshop",
+      "hr": "Radionica",
+      "de": "Workshop",
+      "fr": "Atelier",
+      "it": "Laboratorio",
+      "favourite": false
+    },
+    {
+      "id": 10,
+      "en": "Conference",
+      "hr": "Konferencija",
+      "de": "Konferenz",
+      "fr": "Conférence",
+      "it": "Conferenza",
+      "favourite": false
     }
   ],
   "contacts": [

@@ -1,13 +1,13 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import SignUp from './SignUp.vue'
 import LogIn from './LogIn.vue'
 import LogOut from './LogOut.vue'
-import registeredUsers from '../assets/registeredUsers.json'
+// import registeredUsers from '../assets/registeredUsers.json'
 
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
-  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js.');
+  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
 } else {
   // console.log('PAS instanca povezana.');
 }
@@ -39,7 +39,7 @@ const filterOnlineUsers = async () => {
   try {
     // filtriraj online korisnike iz već dohvaćenih korisnika
     onlineUsers.value = allUsers.value.filter(user => user.online);
-    console.log('Online korisnici uspješno filtrirani:', onlineUsers.value);
+    // console.log('Online korisnici uspješno filtrirani:', onlineUsers.value);
   } catch (error) {
     console.error('Došlo je do greške kod filtriranja online korisnika:', error);
   }
@@ -50,7 +50,7 @@ const filterOfflineUsers = async () => {
   try {
     // filtriraj offline korisnike iz već dohvaćenih korisnika
     offlineUsers.value = allUsers.value.filter(user => !user.online);
-    console.log('Offline korisnici uspješno filtrirani:', offlineUsers.value);
+    // console.log('Offline korisnici uspješno filtrirani:', offlineUsers.value);
   } catch (error) {
     console.error('Došlo je do greške kod filtriranja offline korisnika:', error);
   }
@@ -70,24 +70,20 @@ const getUsers = async () => { // pri montiranju komponente
 const currentView = ref(0); // pratimo trenutni prikaz
 
 // registrirani korisnici - obsoletno - dohvaća se preko PAS-a
-const users = ref([...registeredUsers])
+// const users = ref([...registeredUsers])
 
 // dodaj novog korisnika
-const addUser = (newUser) => {
-  users.value.push(newUser)
-  console.log('New user added:', newUser)
-  console.log('Updated list of users:', users.value)
-  console.log('Online Users:', onlineUsers.value);
-}
+// const addUser = (newUser) => {
+//   users.value.push(newUser)
+//   console.log('New user added:', newUser)
+//   console.log('Updated list of users:', users.value)
+//   console.log('Online Users:', onlineUsers.value);
+// }
 
-// const onlineUsers = computed(() => { // prikaži samo korisnike koji su online
-//   return users.value.filter(user => user.online);
-// });
-
-// Show a specific view and update the page title
+// prikaži određeni prikaz i ažuriraj naslov stranice
 const showView = (view, titleKey) => {
   currentView.value = view;
-  props.updatePageTitle(titleKey); // Pass the translation key to update the title
+  props.updatePageTitle(titleKey); // proslijedi ključ za prijevod naslova
 };
 
 onMounted(async () => {
@@ -104,9 +100,10 @@ onMounted(async () => {
       <button @click="showView(2, 'signIn')">{{ translations[lang]?.signIn }}</button>
       <button @click="showView(3, 'logOut')">{{ translations[lang]?.logOut }}</button>
     </div>
-    <SignUp v-else-if="currentView === 1" :lang="lang" :addUser="addUser"
+    <SignUp v-else-if="currentView === 1" :lang="lang" :allUsers="allUsers" :translations="translations"
       :goToMainPage="() => showView(0, 'welcome')" />
-    <LogIn v-else-if="currentView === 2" :lang="lang" />
+    <LogIn v-else-if="currentView === 2" :lang="lang" :allUsers="allUsers" :translations="translations"
+      :goToMainPage="() => showView(0, 'welcome')" />
     <LogOut v-else-if="currentView === 3" />
   </div>
 </template>

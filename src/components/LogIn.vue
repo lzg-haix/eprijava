@@ -9,6 +9,18 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  allUsers: { // svi korisnici
+    type: Array,
+    required: true,
+  },
+  translations: { // prijevodi
+    type: Object,
+    required: true,
+  },
+  goToMainPage: { // funkcija za povratak na glavnu stranicu, pozvana nakon pri završetku registracije
+    type: Function,
+    required: true,
+  },
 });
 
 // Computed property to retrieve translations based on the current language

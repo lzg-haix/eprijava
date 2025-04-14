@@ -1,11 +1,13 @@
 <script setup>
-import { ref, nextTick, computed } from 'vue'
-import translations from '../assets/translations.json' // import prijevoda
-import registeredCompanies from '../assets/registeredCompanies.json'; // import registriranih tvrtki
+import { ref, nextTick, onMounted, computed } from 'vue'
 import SimpleKeyboard from './SimpleKeyboard.vue' // import virtualne tipkovnice - vanjski library
-import visitPurposes from '../assets/visitPurposes.json' // import namjene posjeta
-import contacts from '../assets/contacts.json'; // import kontakt osoba
-import registeredUsers from '../assets/registeredUsers.json'; // Import registered users
+
+import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+  // console.log('PAS instanca povezana.');
+}
 
 // input parametri iz MainPage.vue
 const props = defineProps({
@@ -13,8 +15,12 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  addUser: { // funkcija za dodavanje novog korisnika
-    type: Function,
+  allUsers: { // svi korisnici
+    type: Array,
+    required: true,
+  },
+  translations: { // prijevodi
+    type: Object,
     required: true,
   },
   goToMainPage: { // funkcija za povratak na glavnu stranicu, pozvana nakon pri završetku registracije
@@ -22,6 +28,120 @@ const props = defineProps({
     required: true,
   },
 })
+
+let onlineUsers = ref([]) // online korisnici
+let offlineUsers = ref([]) // offline korisnici 
+let companies = ref([]) // tvrtke
+let visitPurposes = ref([]) // namjene posjeta
+// let visitPurposeFavourites = ref([]) // omiljene namjene posjeta
+let ccontacts = ref([]) // kontakt osobe
+
+// filtriranje online korisnika
+const filterOnlineUsers = async () => {
+  try {
+    // filtriraj online korisnike iz već dohvaćenih korisnika
+    onlineUsers.value = props.allUsers.filter(user => user.online);
+    console.log('Online korisnici uspješno filtrirani:', onlineUsers.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod filtriranja online korisnika:', error);
+  }
+};
+
+// filtriranje offline korisnika
+const filterOfflineUsers = async () => {
+  try {
+    // filtriraj offline korisnike iz već dohvaćenih korisnika
+    offlineUsers.value = props.allUsers.filter(user => !user.online);
+    console.log('Offline korisnici uspješno filtrirani:', offlineUsers.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod filtriranja offline korisnika:', error);
+  }
+};
+
+// ponudi offline korisnike
+const suggestOfflineUsers = (query) => {
+  if (!query) {
+    filteredUsers.value = [];
+    return;
+  }
+
+  filteredUsers.value = props.allUsers.filter(
+    (user) =>
+      !user.online && // samo offline korisnici
+      user.fullName.toLowerCase().includes(query.toLowerCase()) // uskladi s inputom
+  );
+};
+
+// dohvaćanje tvrtki
+const fetchCompanies = async () => {
+  try {
+    const response = await PAS.get('/companies');
+    companies.value = response.data;
+    console.log('Tvrtke uspješno dohvaćene:', companies.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja tvrtki:', error);
+  }
+};
+
+// filtriranje tvrtki
+const filterCompanies = (query) => {
+  if (!query) { // ako je query prazan, očisti filtrirane tvrtke
+    filteredCompanies.value = [];
+    return;
+  }
+  // filtriraj tvrtke po imenu i spremi u filteredCompanies
+  filteredCompanies.value = companies.value.filter((company) => // filteriraj tvrtke po imenu
+    company.name.toLowerCase().includes(query.toLowerCase()) // pretvori u mala slova i provjeri sadrži li query
+  );
+
+};
+
+// dohvaćanje razloga posjeta
+const fetchVisitPurposes = async () => {
+  try {
+    const response = await PAS.get('/visitPurposes');
+    visitPurposes.value = response.data;
+    console.log('Razlozi posjete uspješno dohvaćeni:', visitPurposes.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja razloga posjete:', error);
+  }
+};
+
+// filtriranje razloga posjeta
+const filterVisitPurposes = (query) => {
+  if (!query) {
+    filteredVisitPurposes.value = [];
+    return;
+  }
+
+  filteredVisitPurposes.value = visitPurposes.value.filter((purpose) =>
+    purpose[props.lang].toLowerCase().includes(query.toLowerCase())
+  );
+
+};
+
+// dohvaćanje kontakt osoba
+const fetchContacts = async () => {
+  try {
+    const response = await PAS.get('/contacts');
+    ccontacts.value = response.data;
+    console.log('Kontakt osobe uspješno dohvaćene:', ccontacts.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja kontakt osoba:', error);
+  }
+};
+
+// filtriranje kontakt osoba
+const filterContactPersons = (query) => {
+  if (!query) {
+    filteredContactPersons.value = [];
+    return;
+  }
+
+  filteredContactPersons.value = ccontacts.value.filter((contact) =>
+    contact.fullName.toLowerCase().includes(query.toLowerCase())
+  );
+};
 
 const input = ref('') // za input virtualne tipkovnice
 const debounceTime = 690 // vrijeme debounce-a za filtriranje
@@ -36,7 +156,7 @@ const onChange = (inputValue) => {
 
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
-      filterOfflineUsers(inputValue); // Call the filter function for offline users
+      suggestOfflineUsers(inputValue); // Call the filter function for offline users
     }, debounceTime);
 
   } else if (step.value === 2) {
@@ -62,56 +182,6 @@ const onChange = (inputValue) => {
     }, debounceTime);
   }
 }
-
-// FILTRIRANJE
-const filterCompanies = (query) => {
-  if (!query) { // ako je query prazan, očisti filtrirane tvrtke
-    filteredCompanies.value = [];
-    return;
-  }
-  // filtriraj tvrtke po imenu i spremi u filteredCompanies
-  filteredCompanies.value = registeredCompanies.filter((company) => // filteriraj tvrtke po imenu
-    company.name.toLowerCase().includes(query.toLowerCase()) // pretvori u mala slova i provjeri sadrži li query
-  );
-
-};
-
-const filterVisitPurposes = (query) => {
-  if (!query) {
-    filteredVisitPurposes.value = [];
-    return;
-  }
-
-  filteredVisitPurposes.value = visitPurposes.filter((purpose) =>
-    purpose[props.lang].toLowerCase().includes(query.toLowerCase())
-  );
-
-};
-
-const filterContactPersons = (query) => {
-  if (!query) {
-    filteredContactPersons.value = [];
-    return;
-  }
-
-  filteredContactPersons.value = contacts.filter((contact) =>
-    contact.fullName.toLowerCase().includes(query.toLowerCase())
-  );
-};
-
-// Function to filter offline users based on the input
-const filterOfflineUsers = (query) => {
-  if (!query) {
-    filteredUsers.value = [];
-    return;
-  }
-
-  filteredUsers.value = registeredUsers.filter(
-    (user) =>
-      !user.online && // Only offline users
-      user.fullName.toLowerCase().includes(query.toLowerCase()) // Match the input
-  );
-};
 
 // ODABIR
 const selectVisitPurpose = (purpose) => {
@@ -142,10 +212,6 @@ const selectUser = (user) => {
   input.value = user.fullName; // Sync with the virtual keyboard
   filteredUsers.value = []; // Clear the suggestions
 };
-
-const gdprText = computed(() => {
-  return translations[props.lang]?.gdprPoints || translations['en'].gdprPoints; // povratak na engleski ako jezik nije pronađen
-});
 
 // DEFINICIJE
 const step = ref(1) // trenutni korak
@@ -217,8 +283,8 @@ const setAdditionalVisitor = (bool) => { // postavi dodatnog gosta
 }
 
 // registracija novog korisnika ili ažuriranje postojećeg
-const handleSignUp = () => {
-  const newUser = { // novi korisnik
+const handleSignUp = async () => {
+  const newUser = {
     fullName: fullName.value, // ime i prezime
     companyName: companyName.value, // naziv tvrtke
     visitPurpose: visitPurpose.value, // namjena posjeta
@@ -228,32 +294,27 @@ const handleSignUp = () => {
     online: true, // online status
   };
 
-  // Provjeri postoji li korisnik u registriranim korisnicima
-  const existingUserIndex = registeredUsers.findIndex(
-    (user) => user.fullName === fullName.value && !user.online
-  );
+  console.log('New user object:', newUser); // Log the new user object
 
-  if (existingUserIndex !== -1) {
-    // Ažuriraj postojećeg korisnika
-    registeredUsers[existingUserIndex] = { ...registeredUsers[existingUserIndex], ...newUser };
-    // console.log('User updated:', registeredUsers[existingUserIndex]);
-  } else {
-    // Dodaj novog korisnika
-    props.addUser(newUser);
-    // console.log('New user registered:', newUser);
+  try {
+    // Create a new user
+    const response = await PAS.post('/users', newUser);
+    if (response && response.data) {
+      console.log('New user added:', response.data);
+    } else {
+      console.error('Unexpected response format:', response);
+    }
+
+    // Reset the form for the next user
+    step.value = 1;
+    fullName.value = '';
+    visitPurpose.value = '';
+    contactPerson.value = '';
+    gdprAgreement.value = false;
+    pinCode.value = '';
+  } catch (error) {
+    console.error('Error creating new user:', error.response?.data || error.message);
   }
-
-  // Log the updated list of users
-  // console.log('Updated users list:', registeredUsers);
-
-  // Resetiraj formu za sljedećeg korisnika
-  step.value = 1;
-  fullName.value = '';
-  // companyName.value ne resetiramo jer je sljedeći korisnik iz iste tvrtke
-  visitPurpose.value = '';
-  contactPerson.value = '';
-  gdprAgreement.value = false;
-  pinCode.value = '';
 };
 
 // fokusiraj input
@@ -276,8 +337,19 @@ const generatePinCode = () => {
   pinCode.value = Math.floor(1000 + Math.random() * 9000).toString() // generiraj random broj od 1000 do 9999
 }
 
-// prijevodi
-const t = computed(() => translations[props.lang] || translations['en']) // dohvati prijevod ili vrati engleski ako nije pronađen
+const gdprText = computed(() => {
+  return props.translations[props.lang]?.gdprPoints || [];
+});
+
+onMounted(async () => {
+  await filterOnlineUsers(); // filtriraj online korisnike
+  await filterOfflineUsers(); // filtriraj offline korisnike
+  await fetchCompanies(); // dohvati tvrtke
+  await fetchVisitPurposes(); // dohvati namjene posjeta
+  await fetchContacts(); // dohvati kontakt osobe
+  console.log('Svi korisnici:', props.allUsers);
+  console.log('Prijevodi: ', props.translations)
+});
 
 </script>
 
@@ -286,10 +358,11 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
     <form @submit.prevent="nextStep">
       <!-- Step 1: Full Name -->
       <div v-if="step === 1" class="form-group">
-        <label class="input-label" for="fullName">{{ t.fullName }}</label>
+        <label class="input-label" for="fullName">{{ translations[lang].fullName }}</label>
         <div class="input-button-row">
           <input type="text" id="fullName" v-model="fullName" ref="fullNameInput" readonly required />
-          <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
+          <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
+          }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="user-suggestions" v-if="filteredUsers.length">
@@ -301,11 +374,12 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
 
       <!-- Step 2: Company Name -->
       <div v-if="step === 2" class="form-group">
-        <label class="input-label" for="companyName">{{ t.companyName }}</label>
+        <label class="input-label" for="companyName">{{ translations[lang].companyName }}</label>
         <div class="input-button-row">
-          <button class="back-button" @click="stepBack">{{ t.back }}</button>
+          <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
           <input type="text" id="companyName" v-model="companyName" ref="companyNameInput" readonly required />
-          <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
+          <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
+          }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="company-suggestions" v-if="filteredCompanies.length">
@@ -318,11 +392,12 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
 
       <!-- Step 3: Purpose of Visit -->
       <div v-if="step === 3" class="form-group">
-        <label class="input-label" for="visitPurpose">{{ t.visitPurpose }}</label>
+        <label class="input-label" for="visitPurpose">{{ translations[lang].visitPurpose }}</label>
         <div class="input-button-row">
-          <button class="back-button" @click="stepBack">{{ t.back }}</button>
+          <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
           <input type="text" id="visitPurpose" v-model="visitPurpose" ref="visitPurposeInput" readonly required />
-          <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
+          <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
+          }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="visit-purpose-suggestions" v-if="filteredVisitPurposes.length">
@@ -335,12 +410,12 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
 
       <!-- Step 4: Contact Person -->
       <div v-if="step === 4" class="form-group">
-        <label class="input-label" for="contactPerson">{{ t.contactPerson }}</label>
+        <label class="input-label" for="contactPerson">{{ translations[lang].contactPerson }}</label>
         <div class="input-button-row">
-          <button class="back-button" @click="stepBack">{{ t.back }}</button>
+          <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
           <input type="text" id="contactPerson" v-model="contactPerson" ref="contactPersonInput" readonly required />
           <button class="confirm-button" type="submit">
-            {{ step < 6 ? t.next : t.finish }} </button>
+            {{ step < 6 ? translations[lang].next : translations[lang].finish }} </button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="contact-person-suggestions" v-if="filteredContactPersons.length">
@@ -353,48 +428,49 @@ const t = computed(() => translations[props.lang] || translations['en']) // dohv
 
       <!-- Step 5: GDPR Agreement -->
       <div v-if="step === 5" class="form-group">
-        <label for="gdprAgreement">{{ t.gdprAgreement }}</label>
+        <label for="gdprAgreement">{{ translations[lang].gdprAgreement }}</label>
         <ul id="gdprAgreement">
           <li v-for="(rule, index) in gdprText" :key="index">{{ rule }}</li>
         </ul>
         <div class="gdpr-agreement">
           <input type="checkbox" id="gdprAgreementCheckbox" v-model="gdprAgreement" ref="gdprAgreementInput" readonly
             required />
-          <label id="gdprAgreementCheckboxNote">{{ t.agreeToGdpr }}</label>
+          <label id="gdprAgreementCheckboxNote">{{ translations[lang].agreeToGdpr }}</label>
         </div>
-        <button class="confirm-button" type="submit">{{ step < 6 ? t.next : t.finish }}</button>
+        <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
+            }}</button>
       </div>
 
       <!-- Step 6: Summary -->
       <div v-if="step === 6" class="form-group summary">
-        <h2>{{ t.summary }}</h2>
-        <p><strong>{{ t.fullName }}:</strong> {{ fullName }}</p>
-        <p><strong>{{ t.companyName }}:</strong> {{ companyName }}</p>
-        <p><strong>{{ t.visitPurpose }}:</strong> {{ visitPurpose }}</p>
-        <p><strong>{{ t.contactPerson }}:</strong> {{ contactPerson }}</p>
+        <h2>{{ translations[lang].summary }}</h2>
+        <p><strong>{{ translations[lang].fullName }}:</strong> {{ fullName }}</p>
+        <p><strong>{{ translations[lang].companyName }}:</strong> {{ companyName }}</p>
+        <p><strong>{{ translations[lang].visitPurpose }}:</strong> {{ visitPurpose }}</p>
+        <p><strong>{{ translations[lang].contactPerson }}:</strong> {{ contactPerson }}</p>
         <p v-if="selectedContactPerson">
           <strong>Email:</strong> {{ selectedContactPerson.email }}
         </p>
         <p v-if="selectedContactPerson">
           <strong>Mob:</strong> {{ selectedContactPerson.phone }}
         </p>
-        <p id="pince"><strong>{{ t.summaryPinCode }}</strong> {{ pinCode }}</p>
-        <p>{{ t.badgePrinting }}</p>
+        <p id="pince"><strong>{{ translations[lang].summaryPinCode }}</strong> {{ pinCode }}</p>
+        <p>{{ translations[lang].badgePrinting }}</p>
       </div>
     </form>
     <div v-if="step === 6" class="additional-visitor-group">
-      <h2>{{ t.additionalVisitor }}</h2>
-      <p>{{ t.additionalVisitorPrompt }}</p>
+      <h2>{{ translations[lang].additionalVisitor }}</h2>
+      <p>{{ translations[lang].additionalVisitorPrompt }}</p>
       <div class="avg-buttons">
-        <button @click="setAdditionalVisitor(true)">{{ t.yes }}</button>
-        <button @click="nextStep">{{ t.no }}</button>
+        <button @click="setAdditionalVisitor(true)">{{ translations[lang].yes }}</button>
+        <button @click="nextStep">{{ translations[lang].no }}</button>
       </div>
     </div>
 
     <!-- Step 7: Thank you -->
     <div v-if="step === 7" class="thank-you">
-      <h2>{{ t.thankYou }}</h2>
-      <p>{{ t.thankYouMessage }}</p>
+      <h2>{{ translations[lang].thankYou }}</h2>
+      <p>{{ translations[lang].thankYouMessage }}</p>
     </div>
   </div>
 </template>
