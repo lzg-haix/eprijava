@@ -4,17 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host --port 8888",
+    "dev": "vite --host  --port 8888",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@primeuix/themes": "^1.0.3",
     "axios": "^1.8.4",
     "flag-icons": "^7.3.2",
     "json-server": "^1.0.0-beta.3",
     "papaparse": "^5.5.2",
+    "primevue": "^4.3.3",
     "simple-keyboard": "^3.8.43",
     "simple-keyboard-layouts": "^3.4.70",
     "vue": "^3.5.13",

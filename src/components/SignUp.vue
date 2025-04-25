@@ -27,6 +27,10 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  currentState: { // trenutni korak, 1 - signup, 2 - login
+    type: Number,
+    required: true,
+  },
 })
 
 let onlineUsers = ref([]) // online korisnici
@@ -234,35 +238,52 @@ const gdprAgreementInput = ref(null) // referenca na input za suglasnost s GDPR-
 const skipStepTwo = ref(false) // preskoči korak 2 ako je u pitanju dodatan gost iz iste tvrtke
 let debounceTimeout // debounce timeout za filtriranje
 
+const finalizeLogIn = () => {
+  console.log('Visit Purpose:', visitPurpose.value);
+  console.log('Contact Person:', contactPerson.value);
+  setTimeout(() => {
+    props.goToMainPage();
+  }, 5000);
+};
+
 // APP FLOW
-const nextStep = async () => { // funkcija za sljedeći korak
-  if (step.value < 6) { // ako nije zadnji korak
-    step.value++ // povećaj korak
-    if (step.value === 2 && skipStepTwo.value === true) { // preskoči korak 2 ako je u pitanju dodatan gost iz iste tvrtke
-      step.value++
+const nextStep = async () => {
+  if (props.currentState === 2) {
+    // If called from login, only handle visit purpose and contact person
+    if (step.value === 3) {
+      step.value = 4; // Move to the contact person step
+    } else if (step.value === 4) {
+      finalizeLogIn(); // Finalize the login process
     }
-    if (step.value === 6) { // ako je korak 6, generiraj pin kod
-      generatePinCode()
-    }
-    await nextTick() // pričekaj da se DOM ažurira
-    focusInput() // fokusiraj input
-    input.value = '' // počisti input virtualne tipkovnice nakon svakog koraka
   } else {
-    handleSignUp() // završi registraciju
-    if (additionalVisitorBool.value === true) { // ako je dodatan gost, vrati se na korak 1
-      skipStepTwo.value = true
-      step.value = 1
-      additionalVisitorBool.value = false // resetiraj dodatnog gosta, u slučaju dodatnog dodatnog gosta
-    }
-    else {
-      step.value = 7 // ako nije dodatan gost, završi registraciju
-      companyName.value = '' // resetiraj naziv tvrtke
-      setTimeout(() => { // pričekaj 5 sekundi
-        props.goToMainPage(); // vrati se na glavnu stranicu
-      }, 5000);
+    // Standard signup flow
+    if (step.value < 6) {
+      step.value++;
+      if (step.value === 2 && skipStepTwo.value === true) {
+        step.value++;
+      }
+      if (step.value === 6) {
+        generatePinCode();
+      }
+      await nextTick();
+      focusInput();
+      input.value = '';
+    } else {
+      handleSignUp();
+      if (additionalVisitorBool.value === true) {
+        skipStepTwo.value = true;
+        step.value = 1;
+        additionalVisitorBool.value = false;
+      } else {
+        step.value = 7;
+        companyName.value = '';
+        setTimeout(() => {
+          props.goToMainPage();
+        }, 5000);
+      }
     }
   }
-}
+};
 
 // funkcija za korak unatrag
 const stepBack = async () => {
@@ -284,28 +305,33 @@ const setAdditionalVisitor = (bool) => { // postavi dodatnog gosta
 
 // registracija novog korisnika ili ažuriranje postojećeg
 const handleSignUp = async () => {
-  const newUser = {
-    fullName: fullName.value, // ime i prezime
-    companyName: companyName.value, // naziv tvrtke
-    visitPurpose: visitPurpose.value, // namjena posjeta
-    contactPerson: contactPerson.value, // kontakt osoba
-    gdprAgreement: gdprAgreement.value, // suglasnost s GDPR-om
-    pinCode: pinCode.value, // pin kod
-    online: true, // online status
-  };
-
-  console.log('New user object:', newUser); // Log the new user object
-
   try {
-    // Create a new user
+    // dohvati ID++
+    const nextId = props.allUsers.length > 0 ? Math.max(...props.allUsers.map(user => user.id)) + 1 : 1;
+
+    // novi objekt korisnika
+    const newUser = {
+      id: nextId,
+      fullName: fullName.value,
+      companyName: companyName.value,
+      visitPurpose: visitPurpose.value,
+      contactPerson: contactPerson.value,
+      gdprAgreement: gdprAgreement.value,
+      pinCode: pinCode.value,
+      online: true,
+    };
+
+    // console.log('New user object:', newUser);
+
+    // POST request
     const response = await PAS.post('/users', newUser);
     if (response && response.data) {
-      console.log('New user added:', response.data);
+      console.log('Novi korisnik:', response.data);
     } else {
-      console.error('Unexpected response format:', response);
+      console.error('Neočekivani response format:', response);
     }
 
-    // Reset the form for the next user
+    // resetiraj forme
     step.value = 1;
     fullName.value = '';
     visitPurpose.value = '';
@@ -313,7 +339,7 @@ const handleSignUp = async () => {
     gdprAgreement.value = false;
     pinCode.value = '';
   } catch (error) {
-    console.error('Error creating new user:', error.response?.data || error.message);
+    console.error('Greška kod kreiranja novog korisnika:', error.response?.data || error.message);
   }
 };
 
@@ -349,6 +375,14 @@ onMounted(async () => {
   await fetchContacts(); // dohvati kontakt osobe
   console.log('Svi korisnici:', props.allUsers);
   console.log('Prijevodi: ', props.translations)
+  if (props.currentState === 2) {
+    // Pre-fill visit purpose and contact person for logged-in user
+    visitPurpose.value = props.loggedInUser?.visitPurpose || '';
+    contactPerson.value = props.loggedInUser?.contactPerson || '';
+    step.value = 3; // Start at the visit purpose step
+  } else {
+    step.value = 1; // Start at the full name step for standard signup
+  }
 });
 
 </script>

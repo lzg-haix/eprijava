@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import SignUp from './SignUp.vue'
 import LogIn from './LogIn.vue'
 import LogOut from './LogOut.vue'
+import AdminPanel from './AdminPanel.vue'
 // import registeredUsers from '../assets/registeredUsers.json'
 
 import { PAS } from '@/utils/pas-util';
@@ -69,17 +70,6 @@ const getUsers = async () => { // pri montiranju komponente
 
 const currentView = ref(0); // pratimo trenutni prikaz
 
-// registrirani korisnici - obsoletno - dohvaća se preko PAS-a
-// const users = ref([...registeredUsers])
-
-// dodaj novog korisnika
-// const addUser = (newUser) => {
-//   users.value.push(newUser)
-//   console.log('New user added:', newUser)
-//   console.log('Updated list of users:', users.value)
-//   console.log('Online Users:', onlineUsers.value);
-// }
-
 // prikaži određeni prikaz i ažuriraj naslov stranice
 const showView = (view, titleKey) => {
   currentView.value = view;
@@ -99,12 +89,14 @@ onMounted(async () => {
       <button @click="showView(1, 'signUp')">{{ translations[lang]?.signUp }}</button>
       <button @click="showView(2, 'signIn')">{{ translations[lang]?.signIn }}</button>
       <button @click="showView(3, 'logOut')">{{ translations[lang]?.logOut }}</button>
+      <button @click="showView(4, 'adminPanel')">admin</button>
     </div>
     <SignUp v-else-if="currentView === 1" :lang="lang" :allUsers="allUsers" :translations="translations"
-      :goToMainPage="() => showView(0, 'welcome')" />
-    <LogIn v-else-if="currentView === 2" :lang="lang" :allUsers="allUsers" :translations="translations"
+      :goToMainPage="() => showView(0, 'welcome')" :currentState="1" />
+    <LogIn v-else-if="currentView === 2" :lang="lang" :offlineUsers="offlineUsers" :translations="translations"
       :goToMainPage="() => showView(0, 'welcome')" />
     <LogOut v-else-if="currentView === 3" />
+    <AdminPanel v-else-if="currentView === 4" />
   </div>
 </template>
 

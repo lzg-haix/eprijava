@@ -1,6 +1,7 @@
 {
   "users": [
     {
+      "id": 1,
       "fullName": "John Doe",
       "companyName": "Example Corp",
       "visitPurpose": "Business Meeting",
@@ -11,6 +12,7 @@
       "online": false
     },
     {
+      "id": 2,
       "fullName": "Joža Krampus",
       "companyName": "Šmarnica d.o.o.",
       "visitPurpose": "Interview",
@@ -21,6 +23,7 @@
       "online": true
     },
     {
+      "id": 3,
       "fullName": "Max Mustermann",
       "companyName": "Musterfirma",
       "visitPurpose": "Partnership Discussion",
@@ -31,6 +34,7 @@
       "online": true
     },
     {
+      "id": 4,
       "fullName": "Jean Dupont",
       "companyName": "Entreprise Française",
       "visitPurpose": "Project Collaboration",
@@ -41,6 +45,7 @@
       "online": false
     },
     {
+      "id": 5,
       "fullName": "Giovanni Rossi",
       "companyName": "Soluzioni Italiane",
       "visitPurpose": "Client Meeting",
@@ -49,6 +54,26 @@
       "pinCode": "3344",
       "defaultLanguage": "it",
       "online": false
+    },
+    {
+      "id": 6,
+      "fullName": "Cecek",
+      "companyName": "Sisa",
+      "visitPurpose": "Poslovni sastanak",
+      "contactPerson": "Leon Žganec",
+      "gdprAgreement": true,
+      "pinCode": "5191",
+      "online": true
+    },
+    {
+      "id": 7,
+      "fullName": "tre",
+      "companyName": "Tech Solutions",
+      "visitPurpose": "Poslovni sastanak",
+      "contactPerson": "Ana Horvat",
+      "gdprAgreement": true,
+      "pinCode": "4871",
+      "online": true
     }
   ],
   "companies": [
@@ -313,7 +338,11 @@
       "additionalVisitorPrompt": "If yes, we will restart the process for the new visitor, skipping the company selection step.",
       "yes": "Yes",
       "no": "No",
-      "placeholderPin": "4-digit PIN"
+      "placeholderPin": "4-digit PIN",
+      "notProvided": "Not provided",
+      "confirmDetails": "Are these details correct?",
+      "detailsCorrect": "Yes, they are correct",
+      "updateDetails": "No, I need to update them"
     },
     "hr": {
       "welcome": "Dobrodošli u HAIX",
@@ -350,7 +379,11 @@
       "additionalVisitorPrompt": "Ako da, ponovno ćemo pokrenuti postupak za novog posjetitelja, preskačući korak odabira tvrtke.",
       "yes": "Da",
       "no": "Ne",
-      "placeholderPin": "4-znamenkasti PIN"
+      "placeholderPin": "4-znamenkasti PIN",
+      "notProvided": "Nije navedeno",
+      "confirmDetails": "Jesu li ovi podaci točni?",
+      "detailsCorrect": "Da, točni su",
+      "updateDetails": "Ne, trebam ih ažurirati"
     },
     "de": {
       "welcome": "Willkommen bei HAIX",
@@ -387,7 +420,11 @@
       "additionalVisitorPrompt": "Wenn ja, werden wir den Prozess für den neuen Besucher neu starten und den Schritt der Firmenauswahl überspringen.",
       "yes": "Ja",
       "no": "Nein",
-      "placeholderPin": "4-stellige PIN"
+      "placeholderPin": "4-stellige PIN",
+      "notProvided": "Nicht angegeben",
+      "confirmDetails": "Sind diese Angaben korrekt?",
+      "detailsCorrect": "Ja, sie sind korrekt",
+      "updateDetails": "Nein, ich muss sie aktualisieren"
     },
     "fr": {
       "welcome": "Bienvenue chez HAIX",
@@ -424,7 +461,11 @@
       "additionalVisitorPrompt": "Si oui, nous recommencerons le processus pour le nouveau visiteur, en sautant l'étape de sélection de l'entreprise.",
       "yes": "Oui",
       "no": "Non",
-      "placeholderPin": "Code PIN"
+      "placeholderPin": "Code PIN",
+      "notProvided": "Non fourni",
+      "confirmDetails": "Ces informations sont-elles correctes?",
+      "detailsCorrect": "Oui, elles sont correctes",
+      "updateDetails": "Non, je dois les mettre à jour"
     },
     "it": {
       "welcome": "Benvenuti a HAIX",
@@ -461,7 +502,11 @@
       "additionalVisitorPrompt": "Se sì, riavvieremo il processo per il nuovo visitatore, saltando il passaggio di selezione dell'azienda.",
       "yes": "Sì",
       "no": "No",
-      "placeholderPin": "PIN a 4 cifre"
+      "placeholderPin": "PIN a 4 cifre",
+      "notProvided": "Non fornito",
+      "confirmDetails": "Questi dettagli sono corretti?",
+      "detailsCorrect": "Sì, sono corretti",
+      "updateDetails": "No, devo aggiornarli"
     }
   },
   "languages": [

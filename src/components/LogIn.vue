@@ -1,15 +1,35 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import SimpleKeyboard from './SimpleKeyboard.vue' // import virtualne tipkovnice - vanjski library
-import translations from '../assets/translations.json' // za prijevode
-import registeredUsers from '../assets/registeredUsers.json' // za registrirane korisnike
+import SignUp from './SignUp.vue';
+
+import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+  // console.log('PAS instanca povezana.');
+}
+
+let allUsers = ref([]) // svi korisnici
+
+
+// dohvaćanje svih korisnika preko API-ja
+const fetchAllUsers = async () => {
+  try {
+    const response = await PAS.get('/users'); // Dohvati sve korisnike iz db.json
+    allUsers.value = response.data; // Spremi sve korisnike
+    console.log('Svi korisnici uspješno dohvaćeni:', allUsers.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja svih korisnika:', error);
+  }
+};
 
 const props = defineProps({
   lang: {
     type: String,
     required: true,
   },
-  allUsers: { // svi korisnici
+  offlineUsers: { // svi korisnici
     type: Array,
     required: true,
   },
@@ -23,32 +43,48 @@ const props = defineProps({
   },
 });
 
-// Computed property to retrieve translations based on the current language
-const t = computed(() => translations[props.lang] || translations['en']);
-
-const users = ref([...registeredUsers]); // Stores the list of registered users
-
 const step = ref(1);
 const pinCode = ref(''); // Stores the entered PIN code
-const errorMessage = ref(''); // Stores error messages for invalid PINs
 
 const nextStep = () => {
-  if (step.value < 2) {
+  if (step.value < 4) {
     step.value++;
   } else {
     handleLogIn();
   }
 };
 
-// tu bude isla logika tipa ako korisnik unese pin od 4 broja,
-// onda se prikaže korak s korisnikovim podacima i da mu se printa badge
-// ako korisnik unese krivi pin, da mu se prikaže poruka da je krivo unio pin
-// i da mu se ponovno prikaže polje za unos pin-a
-// jedino ne znam dal bude kontakt osoba navek ista ili bumo dodali opciju 
-// potvrde ili ponovnog odabira kontakt osobe
-const handleLogIn = () => {
-  // Handle the log-in logic here
-  console.log('PIN Code:', pinCode.value);
+const loggedInUser = ref(null); // Stores the logged-in user's details
+
+// login
+const handleLogIn = async () => {
+  try {
+    // Send a GET request to the backend to find a user with the entered PIN
+    const response = await PAS.get(`/users?pinCode=${encodeURIComponent(pinCode.value)}`);
+    const user = response.data[0]; // JSON Server returns an array, so get the first match
+
+    if (user) {
+      // User found, proceed with login
+      console.log('User logged in:', user);
+      loggedInUser.value = user; // Store the logged-in user's details
+      step.value = 2; // Move to the welcome message step
+    } else {
+      // User not found, show error message
+      console.error('Invalid PIN code');
+    }
+  } catch (error) {
+    console.error('Error during login:', error.response?.data || error.message);
+  }
+};
+
+const confirmDetails = () => {
+  // If the details are correct, proceed to the main page
+  props.goToMainPage();
+};
+
+const updateDetails = () => {
+  // If the user wants to update their details, move to the SignUp component
+  step.value = 3; // Move to the SignUp step
 };
 
 // Function to handle input changes from the virtual keyboard
@@ -56,23 +92,50 @@ const onChange = (inputValue) => {
   pinCode.value = inputValue; // Bind the virtual keyboard input to the PIN code
 };
 
+onMounted(async () => {
+  console.log('Offline korisnici:', props.offlineUsers);
+  await fetchAllUsers(); // Fetch all users when the component is mounted
+});
+
+
 </script>
 
 <template>
   <div class="login-container">
+    <!-- Step 1: Enter PIN -->
     <div id="pin-group" v-if="step === 1">
-      <p id="pin-input">{{ t.enterPin }}</p>
-      <input type="text" id="pinCode" v-model="pinCode" readonly maxlength="4" :placeholder="t.placeholderPin" />
+      <p id="pin-input">{{ translations[lang].enterPin }}</p>
+      <input type="text" id="pinCode" v-model="pinCode" readonly maxlength="4"
+        :placeholder="translations[lang].placeholderPin" />
       <SimpleKeyboard :input="pinCode" :lang="'num'" @onChange="onChange" />
-      <button id="njekst" @click="nextStep">{{ t.next }}</button>
+      <button id="njekst" @click="() => { handleLogIn(); nextStep(); }">{{ translations[lang].next }}</button>
     </div>
+
+    <!-- Step 2: Welcome Message -->
     <div v-else-if="step === 2">
-      <p>{{ t.welcomeBack }}</p>
-      <!-- Add logic to display user data and badge here -->
-      <button @click="nextStep">{{ t.confirm }}</button>
+      <p>{{ translations[lang].welcomeBack }}, {{ loggedInUser?.fullName }}!</p>
+      <p>
+        <strong>{{ translations[lang].visitPurpose }}:</strong> {{ loggedInUser?.visitPurpose ||
+          translations[lang].notProvided }}
+      </p>
+      <p>
+        <strong>{{ translations[lang].contactPerson }}:</strong> {{ loggedInUser?.contactPerson ||
+          translations[lang].notProvided }}
+      </p>
+      <p>{{ translations[lang].confirmDetails }}</p>
+      <div class="button-group">
+        <button @click="confirmDetails">{{ translations[lang].detailsCorrect }}</button>
+        <button @click="updateDetails">{{ translations[lang].updateDetails }}</button>
+      </div>
     </div>
+
+    <!-- Reuse the SignUp component -->
+    <SignUp v-else-if="step === 3" :lang="lang" :allUsers="allUsers" :translations="translations"
+      :goToMainPage="() => props.goToMainPage(0, 'welcome')" :currentState="2" />
+
+    <!-- Step 5: Final Step -->
     <div v-else>
-      <p>Log in successful!</p>
+      <p>{{ translations[lang].logInSuccessful }}</p>
     </div>
   </div>
 </template>

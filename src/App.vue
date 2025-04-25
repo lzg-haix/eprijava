@@ -10,6 +10,10 @@ if (!PAS) {
   // console.log('PAS instanca povezana.');
 }
 
+if (!window.location.origin) {
+  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+}
+
 let time = ref(''); // trenutno vrijeme
 let welcomeMessage = ref(''); // poruka dobrodošlice
 let currentLang = ref('hr'); // defaultni jezik je hrvatski
