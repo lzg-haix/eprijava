@@ -64,7 +64,14 @@ const handleLogIn = async () => {
     const user = response.data[0]; // JSON Server returns an array, so get the first match
 
     if (user) {
-      // User found, proceed with login
+      // Check if the user is already online
+      if (user.online) {
+        alert(`${user.fullName} is already logged in!`); // Display a notification
+        step.value = 1; // Reset to the PIN entry step
+        return; // Stop further processing
+      }
+
+      // User found and not online, proceed with login
       console.log('User logged in:', user);
       loggedInUser.value = user; // Store the logged-in user's details
       step.value = 2; // Move to the welcome message step
@@ -77,14 +84,53 @@ const handleLogIn = async () => {
   }
 };
 
-const confirmDetails = () => {
-  // If the details are correct, proceed to the main page
-  props.goToMainPage();
+const confirmDetails = async () => {
+  try {
+    // Check if the logged-in user exists
+    if (!loggedInUser.value) {
+      console.error('No logged-in user found.');
+      return;
+    }
+
+    // Prepare the updated user data
+    const updatedUser = {
+      online: true, // Set the user as online
+    };
+
+    // Check if the visit purpose and contact person are the same
+    if (
+      loggedInUser.value.visitPurpose === loggedInUser.value.previousVisitPurpose &&
+      loggedInUser.value.contactPerson === loggedInUser.value.previousContactPerson
+    ) {
+      console.log('Visit purpose and contact person are the same as last time. Only updating online status.');
+    } else {
+      // If they are different, update them as well
+      updatedUser.visitPurpose = loggedInUser.value.visitPurpose;
+      updatedUser.contactPerson = loggedInUser.value.contactPerson;
+    }
+
+    // Send a PATCH request to update the user in the database
+    const response = await PAS.patch(`/users/${loggedInUser.value.id}`, updatedUser);
+
+    if (response && response.data) {
+      console.log('User updated successfully:', response.data);
+    } else {
+      console.error('Unexpected response format:', response);
+    }
+
+    // Navigate back to the main page
+    props.goToMainPage();
+  } catch (error) {
+    console.error('Error updating user:', error.response?.data || error.message);
+  }
 };
+
+const skipStepTwo = ref(false); // Flag to skip the GDPR step
 
 const updateDetails = () => {
   // If the user wants to update their details, move to the SignUp component
   step.value = 3; // Move to the SignUp step
+  skipStepTwo.value = true; // Skip the GDPR step since the user already agreed to it
 };
 
 // Function to handle input changes from the virtual keyboard
@@ -109,6 +155,9 @@ onMounted(async () => {
         :placeholder="translations[lang].placeholderPin" />
       <SimpleKeyboard :input="pinCode" :lang="'num'" @onChange="onChange" />
       <button id="njekst" @click="() => { handleLogIn(); nextStep(); }">{{ translations[lang].next }}</button>
+      <p id="forgot-password" @click="updateDetails" style="cursor: pointer; text-decoration: underline;">
+        {{ translations[lang].forgotPassword }}
+      </p>
     </div>
 
     <!-- Step 2: Welcome Message -->
@@ -131,7 +180,7 @@ onMounted(async () => {
 
     <!-- Reuse the SignUp component -->
     <SignUp v-else-if="step === 3" :lang="lang" :allUsers="allUsers" :translations="translations"
-      :goToMainPage="() => props.goToMainPage(0, 'welcome')" :currentState="2" />
+      :goToMainPage="() => props.goToMainPage(0, 'welcome')" :currentState="2" :loggedInUser="loggedInUser" />
 
     <!-- Step 5: Final Step -->
     <div v-else>
@@ -251,5 +300,9 @@ onMounted(async () => {
   /* Center the text inside the key */
   padding: 2.5rem 0.3rem;
   /* Adjust padding for better appearance */
+}
+
+#forgot-password {
+  margin-top: 1em;
 }
 </style>

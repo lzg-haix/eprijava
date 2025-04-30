@@ -17,7 +17,7 @@ const props = defineProps({
   },
   allUsers: { // svi korisnici
     type: Array,
-    required: true,
+    //required: true,
   },
   translations: { // prijevodi
     type: Object,
@@ -30,6 +30,10 @@ const props = defineProps({
   currentState: { // trenutni korak, 1 - signup, 2 - login
     type: Number,
     required: true,
+  },
+  loggedInUser: { // trenutno prijavljeni korisnik
+    type: Object,
+    default: null,
   },
 })
 
@@ -238,12 +242,34 @@ const gdprAgreementInput = ref(null) // referenca na input za suglasnost s GDPR-
 const skipStepTwo = ref(false) // preskoči korak 2 ako je u pitanju dodatan gost iz iste tvrtke
 let debounceTimeout // debounce timeout za filtriranje
 
-const finalizeLogIn = () => {
-  console.log('Visit Purpose:', visitPurpose.value);
-  console.log('Contact Person:', contactPerson.value);
-  setTimeout(() => {
+const finalizeLogIn = async () => {
+  try {
+    if (!props.loggedInUser) {
+      console.error('No logged-in user found.');
+      return;
+    }
+
+    // Prepare the updated user data
+    const updatedUser = {
+      visitPurpose: visitPurpose.value, // Update visit purpose
+      contactPerson: contactPerson.value, // Update contact person
+      online: true, // Set the user as online
+    };
+
+    // Send a PATCH request to update the user in the database
+    const response = await PAS.patch(`/users/${props.loggedInUser.id}`, updatedUser);
+
+    if (response && response.data) {
+      console.log('User updated successfully:', response.data);
+    } else {
+      console.error('Unexpected response format:', response);
+    }
+
+    // Navigate back to the main page
     props.goToMainPage();
-  }, 5000);
+  } catch (error) {
+    console.error('Error updating user:', error.response?.data || error.message);
+  }
 };
 
 // APP FLOW

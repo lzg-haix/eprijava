@@ -9,18 +9,18 @@
       "gdprAgreement": true,
       "pinCode": "1234",
       "defaultLanguage": "en",
-      "online": false
+      "online": true
     },
     {
       "id": 2,
       "fullName": "Joža Krampus",
       "companyName": "Šmarnica d.o.o.",
       "visitPurpose": "Interview",
-      "contactPerson": "Phillip Hoffmann",
+      "contactPerson": "Hofmanson",
       "gdprAgreement": true,
       "pinCode": "5678",
       "defaultLanguage": "hr",
-      "online": true
+      "online": false
     },
     {
       "id": 3,
@@ -31,14 +31,14 @@
       "gdprAgreement": true,
       "pinCode": "9101",
       "defaultLanguage": "de",
-      "online": true
+      "online": false
     },
     {
       "id": 4,
       "fullName": "Jean Dupont",
       "companyName": "Entreprise Française",
-      "visitPurpose": "Project Collaboration",
-      "contactPerson": "Marie Curie",
+      "visitPurpose": "Intervju",
+      "contactPerson": "Uga Buga",
       "gdprAgreement": true,
       "pinCode": "1122",
       "defaultLanguage": "fr",
@@ -48,12 +48,12 @@
       "id": 5,
       "fullName": "Giovanni Rossi",
       "companyName": "Soluzioni Italiane",
-      "visitPurpose": "Client Meeting",
-      "contactPerson": "Luca Bianchi",
+      "visitPurpose": "Poslovni sastanak",
+      "contactPerson": "Leon Žganec",
       "gdprAgreement": true,
       "pinCode": "3344",
       "defaultLanguage": "it",
-      "online": false
+      "online": true
     },
     {
       "id": 6,
@@ -63,7 +63,7 @@
       "contactPerson": "Leon Žganec",
       "gdprAgreement": true,
       "pinCode": "5191",
-      "online": true
+      "online": false
     },
     {
       "id": 7,
@@ -73,7 +73,7 @@
       "contactPerson": "Ana Horvat",
       "gdprAgreement": true,
       "pinCode": "4871",
-      "online": true
+      "online": false
     }
   ],
   "companies": [
@@ -234,7 +234,7 @@
     {
       "id": 1,
       "fullName": "Marko Brljak",
-      "email": "marko.brljak@example.com",
+      "email": "marko.brljakdd@example.com",
       "phone": "+385 91 123 4567",
       "department": "Sales"
     },
@@ -308,6 +308,7 @@
       "signUp": "Sign Up",
       "signIn": "Sign In",
       "logOut": "Log Out",
+      "forgotPassword": "Forgot Password?",
       "fullName": "Full Name",
       "companyName": "Company Name",
       "visitPurpose": "Purpose of Visit",
@@ -349,6 +350,7 @@
       "signUp": "Registracija",
       "signIn": "Prijava",
       "logOut": "Odjava",
+      "forgotPassword": "Zaboravljena lozinka?",
       "fullName": "Puno ime",
       "companyName": "Naziv tvrtke",
       "visitPurpose": "Svrha posjeta",
@@ -390,6 +392,7 @@
       "signUp": "Anmelden",
       "signIn": "Einloggen",
       "logOut": "Ausloggen",
+      "forgotPassword": "Passwort vergessen?",
       "fullName": "Vollständiger Name",
       "companyName": "Firmenname",
       "visitPurpose": "Zweck des Besuchs",
@@ -431,6 +434,7 @@
       "signUp": "S'inscrire",
       "signIn": "Se connecter",
       "logOut": "Se déconnecter",
+      "forgotPassword": "Mot de passe oublié?",
       "fullName": "Nom complet",
       "companyName": "Nom de l'entreprise",
       "visitPurpose": "Objet de la visite",
@@ -472,6 +476,7 @@
       "signUp": "Iscriviti",
       "signIn": "Accedi",
       "logOut": "Disconnettersi",
+      "forgotPassword": "Hai dimenticato la password?",
       "fullName": "Nome completo",
       "companyName": "Nome dell'azienda",
       "visitPurpose": "Scopo della visita",

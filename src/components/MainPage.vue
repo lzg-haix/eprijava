@@ -68,7 +68,7 @@ const getUsers = async () => { // pri montiranju komponente
   }
 }
 
-const currentView = ref(0); // pratimo trenutni prikaz
+const currentView = ref(4); // pratimo trenutni prikaz
 
 // prikaži određeni prikaz i ažuriraj naslov stranice
 const showView = (view, titleKey) => {

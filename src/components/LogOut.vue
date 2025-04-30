@@ -5,6 +5,10 @@ import SimpleKeyboard from './SimpleKeyboard.vue'; // Import the numerical keybo
 
 const loggedInUsers = ref([]); // Stores the currently logged-in users
 const pinCode = ref(''); // Stores the entered PIN code
+const fullName = ref(''); // Stores the entered full name
+const inputMode = ref('pin'); // Tracks the current input mode ('pin' or 'name')
+const suggestedUsers = ref([]); // Stores suggested users for name input
+const selectedUser = ref(null); // Stores the user selected from suggestions
 
 // Fetch all logged-in users
 const fetchLoggedInUsers = async () => {
@@ -34,21 +38,45 @@ const logoutUserByPin = async () => {
     const response = await PAS.get(`/users?pinCode=${encodeURIComponent(pinCode.value)}`);
     const user = response.data[0]; // Get the first matching user
     if (user && user.online) {
-      await PAS.patch(`/users/${user.id}`, { online: false }); // Set `online` to `false`
-      console.log(`User with PIN ${pinCode.value} logged out.`);
-      fetchLoggedInUsers(); // Refresh the list of logged-in users
-      pinCode.value = ''; // Clear the PIN input
+      const confirmLogout = confirm(`Are you sure you want to log out ${user.fullName}?`);
+      if (confirmLogout) {
+        await logoutUserById(user.id);
+        pinCode.value = ''; // Clear the PIN input
+      }
     } else {
-      console.error('No matching online user found for the entered PIN.');
+      alert('No matching online user found for the entered PIN.');
     }
   } catch (error) {
     console.error('Error logging out user by PIN:', error);
   }
 };
 
+// Handle full name input and show suggestions
+const handleNameInput = () => {
+  suggestedUsers.value = loggedInUsers.value.filter((user) =>
+    user.fullName.toLowerCase().includes(fullName.value.toLowerCase())
+  );
+};
+
+// Handle suggestion click
+const selectUser = (user) => {
+  selectedUser.value = user;
+  const confirmLogout = confirm(`Are you sure you want to log out ${user.fullName}?`);
+  if (confirmLogout) {
+    logoutUserById(user.id);
+    fullName.value = ''; // Clear the full name input
+    suggestedUsers.value = []; // Clear suggestions
+  }
+};
+
 // Handle input changes from the virtual keyboard
 const onChange = (inputValue) => {
-  pinCode.value = inputValue; // Bind the virtual keyboard input to the PIN code
+  if (inputMode.value === 'pin') {
+    pinCode.value = inputValue; // Bind the virtual keyboard input to the PIN code
+  } else {
+    fullName.value = inputValue; // Bind the virtual keyboard input to the full name
+    handleNameInput(); // Update suggestions
+  }
 };
 
 // Fetch logged-in users when the component is mounted
@@ -59,25 +87,32 @@ onMounted(() => {
 
 <template>
   <div class="logout-container">
-    <!-- Left Side: Select from Logged-in Users -->
-    <div class="logout-left">
-      <h2>Currently Logged-in Users</h2>
-      <ul>
-        <li v-for="user in loggedInUsers" :key="user.id">
-          <span @click="logoutUserById(user.id)" class="clickable-name">{{ user.fullName }}</span>
-        </li>
-      </ul>
+    <!-- Input Mode Selector -->
+    <div class="input-mode-selector">
+      <button :class="{ active: inputMode === 'pin' }" @click="inputMode = 'pin'">Use PIN</button>
+      <button :class="{ active: inputMode === 'name' }" @click="inputMode = 'name'">Use Full Name</button>
     </div>
 
-    <!-- Divider -->
-    <div class="divider"></div>
-
-    <!-- Right Side: Enter PIN to Log Out -->
-    <div class="logout-right">
-      <h2>Log Out by PIN</h2>
-      <input type="text" v-model="pinCode" maxlength="4" placeholder="Enter PIN" readonly />
+    <!-- PIN Input -->
+    <div v-if="inputMode === 'pin'" class="pin-input">
+      <p>Enter your PIN:</p>
+      <input type="text" v-model="pinCode" readonly maxlength="4" placeholder="Enter PIN" />
       <SimpleKeyboard :input="pinCode" :lang="'num'" @onChange="onChange" />
       <button @click="logoutUserByPin">Log Out</button>
+    </div>
+
+    <!-- Full Name Input -->
+    <div v-else class="name-input">
+      <p>Enter your full name:</p>
+      <input type="text" v-model="fullName" placeholder="Enter Full Name" />
+      <SimpleKeyboard :input="fullName" :lang="'qwerty'" @onChange="onChange" />
+      <div class="suggestions">
+        <p v-if="suggestedUsers.length === 0">No suggestions available.</p>
+        <div v-for="user in suggestedUsers" :key="user.id" class="suggestion-card" @click="selectUser(user)">
+          <p>{{ user.fullName }}</p>
+          <p>{{ user.companyName }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -85,86 +120,61 @@ onMounted(() => {
 <style scoped>
 .logout-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
   padding: 20px;
-  align-items: stretch;
   height: 100vh;
   box-sizing: border-box;
 }
 
-.logout-left,
-.logout-right {
-  width: 45%;
-}
-
-.divider {
-  width: 2px;
-  background-color: #ccc;
-  height: 80%;
-  align-self: stretch;
-}
-
-.logout-left ul {
-  list-style: none;
-  padding: 0;
-}
-
-.logout-left li {
+.input-mode-selector {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.logout-left .clickable-name {
-  display: inline-block;
-  /* Make it behave like a box */
-  padding: 10px 15px;
-  /* Add padding for a box-like appearance */
-  background-color: #f8f9fa;
-  /* Light gray background */
-  color: #333;
-  /* Dark text color */
-  border: 1px solid #ccc;
-  /* Add a border */
+.input-mode-selector button {
+  padding: 10px 20px;
+  border: none;
   border-radius: 5px;
-  /* Rounded corners */
   cursor: pointer;
-  /* Pointer cursor to indicate interactivity */
-  text-align: center;
-  /* Center the text */
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
-  /* Smooth hover effect */
+  background-color: #2c3e50;
+  color: white;
 }
 
-.logout-left .clickable-name:hover {
-  background-color: #e9ecef;
-  /* Slightly darker background on hover */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* Add a subtle shadow on hover */
+.input-mode-selector button.active {
+  background-color: #007bff;
 }
 
-.logout-right input {
-  width: calc(100% - 20px);
+.suggestions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestion-card {
   padding: 10px;
-  margin-bottom: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
 }
 
-.logout-right .simple-keyboard {
-  margin-top: 10px;
+.suggestion-card:hover {
+  background-color: #e0e0e0;
 }
 
 .simple-keyboard {
   position: fixed;
-  bottom: 10rem;
-  left: 75%;
+  bottom: 5rem;
+  left: 50%;
   transform: translateX(-50%);
-  width: 30%;
-  height: 50%;
+  width: 90%;
+  height: 35%;
   background-color: #2c3e50;
-  padding: 3rem;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -173,10 +183,10 @@ onMounted(() => {
 ::v-deep(.hg-button) {
   background-color: #ffffff;
   color: #2c3e50;
-  font-size: 3rem;
+  font-size: 2rem;
   border: none;
   border-radius: 5px;
-  padding: 2.5rem 1.5rem;
+  padding: 1.75rem 1.5rem;
   margin: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -193,21 +203,30 @@ onMounted(() => {
   transition: none;
 }
 
-::v-deep(.hg-button[data-skbtn="0"]) {
+.suggestion-card p {
+  color: #2c3e50;
+}
+
+/* ::v-deep(.hg-button:hover) {
+  background-color: #2c3e50;
+  color: #ffffff;
+}
+
+::v-deep(.hg-button-active) {
+  background-color: #ffffff !important;
+  color: #2c3e50 !important;
+  transition: none;
+} */
+
+/* ::v-deep(.hg-button[data-skbtn="0"]) {
   flex: 2;
-  /* Make the "0" key twice as wide as other keys */
   text-align: center;
-  /* Center the text inside the key */
   padding: 2.5rem 3.5rem;
-  /* Adjust padding for better appearance */
 }
 
 ::v-deep(.hg-button[data-skbtn="{bksp}"]) {
   flex: 2;
-  /* Make the "0" key twice as wide as other keys */
   text-align: center;
-  /* Center the text inside the key */
   padding: 2.5rem 0.3rem;
-  /* Adjust padding for better appearance */
-}
+} */
 </style>

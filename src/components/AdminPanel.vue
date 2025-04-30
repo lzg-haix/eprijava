@@ -1,11 +1,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { PAS } from '@/utils/pas-util'; // Import PAS for API calls
+import { PAS } from '@/utils/pas-util';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import InputText from 'primevue/inputtext';
 
-// Tabs and active tab
 const activeTab = ref('Users'); // Tracks the currently active tab
+const editingRows = ref([]); // Tracks the rows being edited
 
 // Data for users, companies, and contacts
 const users = ref([]);
@@ -22,8 +23,6 @@ const userColumns = ref([
 
 const companyColumns = ref([
     { field: 'name', header: 'Tvrtka' },
-    // { field: 'industry', header: 'Industry' },
-    // { field: 'location', header: 'Location' },
 ]);
 
 const contactColumns = ref([
@@ -60,7 +59,7 @@ const filteredContacts = computed(() => {
 // Function to switch tabs
 const switchTab = (tab) => {
     activeTab.value = tab;
-    searchQuery.value = ''; // Clear search query when switching tabs
+    searchQuery.value = '';
     companySearchQuery.value = '';
     contactSearchQuery.value = '';
 };
@@ -84,6 +83,32 @@ const fetchData = async () => {
     }
 };
 
+// Handle row edit save
+const onRowEditSave = async (event) => {
+    const { newData } = event;
+
+    try {
+        // Determine the active tab and update the corresponding data source
+        if (activeTab.value === 'Users') {
+            await PAS.patch(`/users/${newData.id}`, newData);
+            const index = users.value.findIndex((user) => user.id === newData.id);
+            if (index !== -1) users.value[index] = newData;
+        } else if (activeTab.value === 'Companies') {
+            await PAS.patch(`/companies/${newData.id}`, newData);
+            const index = companies.value.findIndex((company) => company.id === newData.id);
+            if (index !== -1) companies.value[index] = newData;
+        } else if (activeTab.value === 'Contacts') {
+            await PAS.patch(`/contacts/${newData.id}`, newData);
+            const index = contacts.value.findIndex((contact) => contact.id === newData.id);
+            if (index !== -1) contacts.value[index] = newData;
+        }
+
+        console.log('Row updated:', newData);
+    } catch (error) {
+        console.error('Error updating row:', error);
+    }
+};
+
 // Fetch data when the component is mounted
 onMounted(() => {
     fetchData();
@@ -104,29 +129,49 @@ onMounted(() => {
             <!-- Users Tab -->
             <div v-if="activeTab === 'Users'">
                 <input type="text" v-model="searchQuery" placeholder="Pretraži goste..." />
-                <DataTable :value="filteredUsers" tableStyle="min-width: 50rem" responsiveLayout="scroll" autoLayout
+                <DataTable v-model:editingRows="editingRows" :value="filteredUsers" editMode="row" dataKey="id"
+                    @row-edit-save="onRowEditSave" tableStyle="min-width: 50rem" responsiveLayout="scroll" autoLayout
                     showGridlines>
                     <Column v-for="col in userColumns" :key="col.field" :field="col.field" :header="col.header"
-                        style="width: 25%;"></Column>
+                        style="width: 25%;">
+                        <template #editor="{ data, field }">
+                            <InputText v-model="data[field]" fluid />
+                        </template>
+                    </Column>
+                    <Column :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+                    </Column>
                 </DataTable>
             </div>
 
             <!-- Companies Tab -->
             <div v-if="activeTab === 'Companies'">
                 <input type="text" v-model="companySearchQuery" placeholder="Pretraži tvrtke..." />
-                <DataTable :value="filteredCompanies" tableStyle="min-width: 50rem" responsiveLayout="scroll"
-                    autoLayout>
+                <DataTable v-model:editingRows="editingRows" :value="filteredCompanies" editMode="row" dataKey="id"
+                    @row-edit-save="onRowEditSave" tableStyle="min-width: 50rem" responsiveLayout="scroll" autoLayout>
                     <Column v-for="col in companyColumns" :key="col.field" :field="col.field" :header="col.header"
-                        style="width: 33.33%;"></Column>
+                        style="width: 33.33%;">
+                        <template #editor="{ data, field }">
+                            <InputText v-model="data[field]" fluid />
+                        </template>
+                    </Column>
+                    <Column :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+                    </Column>
                 </DataTable>
             </div>
 
             <!-- Contacts Tab -->
             <div v-if="activeTab === 'Contacts'">
                 <input type="text" v-model="contactSearchQuery" placeholder="Pretraži kontakt osobe..." />
-                <DataTable :value="filteredContacts" tableStyle="min-width: 50rem" responsiveLayout="scroll" autoLayout>
+                <DataTable v-model:editingRows="editingRows" :value="filteredContacts" editMode="row" dataKey="id"
+                    @row-edit-save="onRowEditSave" tableStyle="min-width: 50rem" responsiveLayout="scroll" autoLayout>
                     <Column v-for="col in contactColumns" :key="col.field" :field="col.field" :header="col.header"
-                        style="width: 45%;"></Column>
+                        style="width: 45%;">
+                        <template #editor="{ data, field }">
+                            <InputText v-model="data[field]" fluid />
+                        </template>
+                    </Column>
+                    <Column :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+                    </Column>
                 </DataTable>
             </div>
         </div>
@@ -204,20 +249,16 @@ li {
     color: black !important;
 }
 
-::v-deep(.p-datatable-thead > tr > th) {
+/* ::v-deep(.p-datatable-thead > tr > th) {
     font-size: 1.5em;
     font-weight: bolder;
-    /* text-align: center !important;
-    vertical-align: middle !important; */
-    /* border-bottom: 0.25em solid #ccc; */
+
     padding: 0.5em;
 }
 
-/* Center text in DataTable cells */
 ::v-deep(.p-datatable-tbody > tr > td) {
-    /* text-align: center;
-    vertical-align: middle; */
+
     padding: 0.5em;
     font-size: 1.2em;
-}
+} */
 </style>
