@@ -4,11 +4,10 @@
       "id": 1,
       "fullName": "John Doe",
       "companyName": "Example Corp",
-      "visitPurpose": "Business Meeting",
+      "visitPurpose": "Osmi Putnik",
       "contactPerson": "Jane Smith",
       "gdprAgreement": true,
       "pinCode": "1234",
-      "defaultLanguage": "en",
       "online": true
     },
     {
@@ -19,7 +18,6 @@
       "contactPerson": "Hofmanson",
       "gdprAgreement": true,
       "pinCode": "5678",
-      "defaultLanguage": "hr",
       "online": false
     },
     {
@@ -30,7 +28,6 @@
       "contactPerson": "Anna Müller",
       "gdprAgreement": true,
       "pinCode": "9101",
-      "defaultLanguage": "de",
       "online": false
     },
     {
@@ -41,7 +38,6 @@
       "contactPerson": "Uga Buga",
       "gdprAgreement": true,
       "pinCode": "1122",
-      "defaultLanguage": "fr",
       "online": false
     },
     {
@@ -52,8 +48,7 @@
       "contactPerson": "Leon Žganec",
       "gdprAgreement": true,
       "pinCode": "3344",
-      "defaultLanguage": "it",
-      "online": true
+      "online": false
     },
     {
       "id": 6,

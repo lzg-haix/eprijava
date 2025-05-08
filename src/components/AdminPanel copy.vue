@@ -4,26 +4,9 @@ import { PAS } from '@/utils/pas-util';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
-import Dialog from 'primevue/dialog';
-import Toolbar from 'primevue/toolbar';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
-import SplitButton from 'primevue/splitbutton';
 
 const activeTab = ref('Users'); // Tracks the currently active tab
 const editingRows = ref([]); // Tracks the rows being edited
-
-const items = ref([
-    {
-        label: 'Update',
-        icon: 'pi pi-refresh'
-    },
-    {
-        label: 'Delete',
-        icon: 'pi pi-times'
-    }
-])
 
 // Data for users, companies, and contacts
 const users = ref([]);
@@ -130,48 +113,6 @@ const onRowEditSave = async (event) => {
 onMounted(() => {
     fetchData();
 });
-
-const userDialog = ref(false); // Controls the visibility of the user dialog
-const newUser = ref({}); // Holds the new user data
-const showNewUserDialog = async () => {
-    try {
-        userDialog.value = true; // Show the dialog
-    } catch (error) {
-        console.error('Error adding user:', error);
-    }
-};
-const addUser = async () => {
-    try {
-        // Find the last used user ID and increment it for the new user
-        const lastUserId = users.value.length > 0 ? Math.max(...users.value.map(user => user.id)) : 0;
-        newUser.value.id = lastUserId + 1;
-
-        // Assign the new user's Online value to false
-        newUser.value.online = false;
-
-        // Generate a unique 4-digit pinCode for the new user
-        let uniquePinCode;
-        do {
-            uniquePinCode = Math.floor(1000 + Math.random() * 9000);
-        } while (users.value.some(user => user.pinCode === uniquePinCode));
-        newUser.value.pinCode = uniquePinCode;
-
-        // Make a POST request to create a new user
-        const response = await PAS.post('/users', newUser.value);
-
-        // Add the newly created user to the users list
-        users.value.push(response.data);
-
-        // Reset the newUser object and close the dialog
-        newUser.value = {};
-        userDialog.value = false;
-
-        console.log('User added successfully:', response.data);
-    } catch (error) {
-        console.error('Error adding user:', error);
-    }
-};
-
 </script>
 
 <template>
@@ -187,56 +128,27 @@ const addUser = async () => {
         <div class="tab-content">
             <!-- Users Tab -->
             <div v-if="activeTab === 'Users'">
-                <div class="toolbar">
-                    <div class="toolbar-start">
-                        <Button class="new" icon="pi pi-plus" @click="showNewUserDialog" />
-                    </div>
-                    <div class="toolbar-center"><input type="text" class="search" v-model="searchQuery"
-                            placeholder="Unesite ime"></div>
-                    <div class="toolbar-end"></div>
-                </div>
-                <div class="datatable">
-                    <DataTable :value="filteredUsers" dataKey="id" v-model="searchQuery" tableStyle="min-width: 20rem"
-                        responsiveLayout="scroll">
-                        <Column v-for="col in userColumns" :key="col.field" :field="col.field" :header="col.header"
-                            style="width: 25%;" sortable>
-                        </Column>
-                        <Column>
-                            <template #body>
-                                <div class="datatable-buttons">
-                                    <Button icon="pi pi-pencil" />
-                                    <Button icon="pi pi-trash" />
-                                </div>
-                            </template>
-                        </Column>
-                    </DataTable>
-                </div>
-                <Dialog v-model:visible="userDialog" header="Dodaj novog korisnika" :visible="false" :modal="true"
-                    :closable="false" :dismissable-mask="true" :style="{ width: '50vw' }">
-                    <div class="dialog-wrapper">
-                        <div class="field">
-                            <label for="fullName">Puno ime</label>
-                            <InputText id="fullName" v-model="newUser.fullName" required />
-                        </div>
-                        <div class="field">
-                            <label for="companyName">Tvrtka</label>
-                            <InputText id="companyName" v-model="newUser.companyName" required />
-                        </div>
-                        <div class="field">
-                            <label for="visitPurpose">Svrha posjete</label>
-                            <InputText id="visitPurpose" v-model="newUser.visitPurpose" required />
-                        </div>
-                        <div class="field">
-                            <label for="contactPerson">Kontakt osoba</label>
-                            <InputText id="contactPerson" v-model="newUser.contactPerson" required />
-                        </div>
-                        <div class="dialog-footer">
-                            <Button label="Spremi" icon="pi pi-check" type="submit" @click="addUser" />
-                            <Button label="Odustani" icon="pi pi-times" class="p-button-text"
-                                @click="userDialog = false" />
-                        </div>
-                    </div>
-                </Dialog>
+                <input type="text" v-model="searchQuery" placeholder="Pretraži goste..." />
+                <DataTable v-model:editingRows="editingRows" :value="filteredUsers" editMode="row" dataKey="id"
+                    @row-edit-save="onRowEditSave" tableStyle="min-width: 20rem" responsiveLayout="scroll" autoLayout
+                    :pt="{
+                        row: ({ data }) => ({
+                            class: editingRows[data.id] ? 'row-editing' : ''
+                        })
+                    }">
+                    <Column v-for="col in userColumns" :key="col.field" :field="col.field" :header="col.header"
+                        style="width: 25%;">
+                        <template #editor="{ data, field }">
+                            <InputText v-model="data[field]" fluid />
+                        </template>
+                    </Column>
+                    <Column :exportable="false" style="min-width: 12rem">
+                        <template>
+                            <Button icon="pi pi-pencil" outlined rounded />
+                            <Button icon="pi pi-trash" outlined rounded severity="danger" />
+                        </template>
+                    </Column>
+                </DataTable>
             </div>
 
             <!-- Companies Tab -->
@@ -275,13 +187,6 @@ const addUser = async () => {
 </template>
 
 <style scoped>
-.dialog-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    background-color: white;
-}
-
 .admin-panel {
     display: flex;
     flex-direction: column;
@@ -293,6 +198,8 @@ const addUser = async () => {
     background-color: #2c3e50;
     border: 1em solid #2c3e50;
     border-radius: 15px;
+    /* padding: 10px; */
+    /* border-bottom: 1px solid #ccc; */
 }
 
 .admin-header button {
@@ -322,24 +229,86 @@ const addUser = async () => {
     overflow-y: auto;
 }
 
-.toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1em;
+input[type="text"] * {
+    width: 100%;
+    padding: 2em;
+    margin-bottom: 2em;
+    /* border: 1px solid #e70a0a; */
+    border-radius: 5px;
+    background-color: white;
 }
 
-::v-deep(.p-iconfield) {
-    display: flex;
-    flex-direction: row;
+input {
+    margin-bottom: 2em;
+    padding: 1em;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    color: black !important;
+}
+
+::v-deep(.p-datatable-column-header-content) {
+    font-size: 1.5em;
+    font-weight: bolder;
+    justify-content: center;
+    /* background-color: rgb(101, 170, 101); */
+    padding: 0.5em;
+}
+
+::v-deep(.p-datatable-tbody > tr > td) {
+    padding: 0.5em;
+    font-size: 1em;
+    text-align: center;
+    /* background-color: grey; */
+    /* border: 1px solid red;
+    border-radius: 1em; */
+}
+
+::v-deep(.p-row-even) {
+    background-color: #425e7a;
+
+}
+
+::v-deep(.p-row-odd) {
+    background-color: #284a6d;
+}
+
+::v-deep(.p-inputtext) {
     margin: 0;
     padding: 1em;
     text-align: center;
 }
 
-.datatable-buttons {
-    display: flex;
-    flex-direction: row;
-    gap: 0.25em;
+::v-deep(.row-editing) {
+    background-color: #f0f8ff;
+    /* Light blue background */
+    border: 2px solid #007bff;
+    /* Blue border */
+    transition: background-color 0.3s ease, border 0.3s ease;
 }
+
+/* ::v-deep(.p-component) {
+    margin: 0;
+    padding: 1em;
+}
+
+::v-deep(.p-filled) {
+    margin: 0;
+    padding: 1em;
+}
+
+::v-deep(.p-inputtext-fluid) {
+    margin: 0;
+    padding: 1em;
+} */
 </style>
