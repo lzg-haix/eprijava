@@ -10,7 +10,6 @@ import Toolbar from 'primevue/toolbar';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import SplitButton from 'primevue/splitbutton';
-import DataTableVue from './DataTable.vue';
 
 const activeTab = ref('Users'); // Tracks the currently active tab
 const editingRows = ref([]); // Tracks the rows being edited
@@ -172,13 +171,7 @@ const addUser = async () => {
         console.error('Error adding user:', error);
     }
 };
-// Handle the row-deleted event
-const handleRowDeleted = (userId) => {
-    const index = users.value.findIndex((user) => user.id === userId);
-    if (index !== -1) {
-        users.value.splice(index, 1); // Update the local data array
-    }
-};
+
 </script>
 
 <template>
@@ -192,13 +185,115 @@ const handleRowDeleted = (userId) => {
 
         <!-- Tab Content -->
         <div class="tab-content">
-            <DataTableVue :data="users" :displayDetails="userColumns" :currently-displaying='"users"'
-                @row-deleted="handleRowDeleted" />
+            <!-- Users Tab -->
+            <div v-if="activeTab === 'Users'">
+                <div class="toolbar">
+                    <div class="toolbar-start">
+                        <Button class="new" icon="pi pi-plus" @click="showNewUserDialog" />
+                    </div>
+                    <div class="toolbar-center"><input type="text" class="search" v-model="searchQuery"
+                            placeholder="Unesite ime"></div>
+                    <div class="toolbar-end"></div>
+                </div>
+                <div class="datatable">
+                    <DataTable :value="filteredUsers" dataKey="id" v-model="searchQuery" tableStyle="min-width: 20rem"
+                        responsiveLayout="scroll">
+                        <Column v-for="col in userColumns" :key="col.field" :field="col.field" :header="col.header"
+                            style="width: 25%;" sortable>
+                        </Column>
+                        <Column>
+                            <template #body>
+                                <div class="datatable-buttons">
+                                    <Button icon="pi pi-pencil" />
+                                    <Button icon="pi pi-trash" />
+                                </div>
+                            </template>
+                        </Column>
+                    </DataTable>
+                </div>
+
+                <Dialog v-model:visible="userDialog" :visible="false" header="Edit Profile" :dismissable-mask="false"
+                    :modal="true" :closable="true"
+                    :style="{ width: '25vw', height: auto, color: 'black', background: 'white' }">
+                    <div class="dialog-wrapper">
+                        <div class="field">
+                            <label for="fullName">Puno ime</label>
+                            <InputText id="fullName" v-model="newUser.fullName" required />
+                        </div>
+                        <div class="field">
+                            <label for="companyName">Tvrtka</label>
+                            <InputText id="companyName" v-model="newUser.companyName" required />
+                        </div>
+                        <div class="field">
+                            <label for="visitPurpose">Svrha posjete</label>
+                            <InputText id="visitPurpose" v-model="newUser.visitPurpose" required />
+                        </div>
+                        <div class="field">
+                            <label for="contactPerson">Kontakt osoba</label>
+                            <InputText id="contactPerson" v-model="newUser.contactPerson" required />
+                        </div>
+                        <div class="dialog-footer">
+                            <Button label="Spremi" icon="pi pi-check" type="submit" @click="addUser" />
+                            <Button label="Odustani" icon="pi pi-times" class="p-button-text"
+                                @click="userDialog = false" />
+                        </div>
+                    </div>
+                </Dialog>
+
+            </div>
+
+            <!-- Companies Tab -->
+            <div v-if="activeTab === 'Companies'">
+                <input type="text" v-model="companySearchQuery" placeholder="Pretraži tvrtke..." />
+                <DataTable v-model:editingRows="editingRows" :value="filteredCompanies" editMode="row" dataKey="id"
+                    @row-edit-save="onRowEditSave" tableStyle="min-width: 50rem" responsiveLayout="scroll" autoLayout>
+                    <Column v-for="col in companyColumns" :key="col.field" :field="col.field" :header="col.header"
+                        style="width: 33.33%;">
+                        <template #editor="{ data, field }">
+                            <InputText v-model="data[field]" fluid />
+                        </template>
+                    </Column>
+                    <Column :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+                    </Column>
+                </DataTable>
+            </div>
+
+            <!-- Contacts Tab -->
+            <div v-if="activeTab === 'Contacts'">
+                <input type="text" v-model="contactSearchQuery" placeholder="Pretraži kontakt osobe..." />
+                <DataTable v-model:editingRows="editingRows" :value="filteredContacts" editMode="row" dataKey="id"
+                    @row-edit-save="onRowEditSave" tableStyle="min-width: 50rem" responsiveLayout="scroll" autoLayout>
+                    <Column v-for="col in contactColumns" :key="col.field" :field="col.field" :header="col.header"
+                        style="width: 45%;">
+                        <template #editor="{ data, field }">
+                            <InputText v-model="data[field]" fluid />
+                        </template>
+                    </Column>
+                    <Column :rowEditor="true" style="width: 10%; min-width: 8rem" bodyStyle="text-align:center">
+                    </Column>
+                </DataTable>
+            </div>
         </div>
     </div>
 </template>
 
 <style scoped>
+::v-deep(.p-dialog .p-component) {
+    background-color: #2c3e50;
+    color: white;
+    font-weight: bolder;
+    font-size: 1.5em;
+}
+
+.dialog-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    background-color: white;
+    border: 3px solid red;
+    border-radius: 1em;
+}
+
 .admin-panel {
     display: flex;
     flex-direction: column;
@@ -234,7 +329,29 @@ const handleRowDeleted = (userId) => {
 }
 
 .tab-content {
+    flex: 1;
     padding: 1em;
-    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+}
+
+::v-deep(.p-iconfield) {
+    display: flex;
+    flex-direction: row;
+    margin: 0;
+    padding: 1em;
+    text-align: center;
+}
+
+.datatable-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25em;
 }
 </style>

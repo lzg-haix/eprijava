@@ -39,36 +39,6 @@
       "gdprAgreement": true,
       "pinCode": "1122",
       "online": false
-    },
-    {
-      "id": 5,
-      "fullName": "Giovanni Rossi",
-      "companyName": "Soluzioni Italiane",
-      "visitPurpose": "Poslovni sastanak",
-      "contactPerson": "Leon Žganec",
-      "gdprAgreement": true,
-      "pinCode": "3344",
-      "online": false
-    },
-    {
-      "id": 6,
-      "fullName": "Cecek",
-      "companyName": "Sisa",
-      "visitPurpose": "Poslovni sastanak",
-      "contactPerson": "Leon Žganec",
-      "gdprAgreement": true,
-      "pinCode": "5191",
-      "online": false
-    },
-    {
-      "id": 7,
-      "fullName": "tre",
-      "companyName": "Tech Solutions",
-      "visitPurpose": "Poslovni sastanak",
-      "contactPerson": "Ana Horvat",
-      "gdprAgreement": true,
-      "pinCode": "4871",
-      "online": false
     }
   ],
   "companies": [
