@@ -1,18 +1,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { PAS } from '@/utils/pas-util';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
-import Dialog from 'primevue/dialog';
-import Toolbar from 'primevue/toolbar';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
-import SplitButton from 'primevue/splitbutton';
-import DataTableVue from './DataTable.vue';
 
-const activeTab = ref('Users'); // Tracks the currently active tab
+import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+    console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+    // console.log('PAS instanca povezana.');
+}
+import DataTable from './DataTable.vue';
+
+const activeTab = ref('users'); // Tracks the currently active tab
 const editingRows = ref([]); // Tracks the rows being edited
 
 const items = ref([
@@ -30,6 +27,7 @@ const items = ref([
 const users = ref([]);
 const companies = ref([]);
 const contacts = ref([]);
+const translations = ref([]);
 
 // Columns for each tab
 const userColumns = ref([
@@ -48,6 +46,20 @@ const contactColumns = ref([
     { field: 'email', header: 'Email' },
     { field: 'phone', header: 'Mob.' },
 ]);
+
+const currentData = computed(() => {
+    if (activeTab.value === 'users') return users.value;
+    if (activeTab.value === 'companies') return companies.value;
+    if (activeTab.value === 'contacts') return contacts.value;
+    return [];
+});
+
+const currentColumns = computed(() => {
+    if (activeTab.value === 'users') return userColumns.value;
+    if (activeTab.value === 'companies') return companyColumns.value;
+    if (activeTab.value === 'contacts') return contactColumns.value;
+    return [];
+});
 
 // Search functionality
 const searchQuery = ref('');
@@ -85,17 +97,19 @@ const switchTab = (tab) => {
 // Fetch data from the backend
 const fetchData = async () => {
     try {
-        const [usersResponse, companiesResponse, contactsResponse] = await Promise.all([
+        const [usersResponse, companiesResponse, contactsResponse, translationsResponse] = await Promise.all([
             PAS.get('/users'),
             PAS.get('/companies'),
             PAS.get('/contacts'),
+            PAS.get('/translations'),
         ]);
 
         users.value = usersResponse.data;
         companies.value = companiesResponse.data;
         contacts.value = contactsResponse.data;
+        translations.value = translationsResponse.data;
 
-        console.log('Data fetched successfully:', { users: users.value, companies: companies.value, contacts: contacts.value });
+        console.log('Data fetched successfully:', { users: users.value, companies: companies.value, contacts: contacts.value, translations: translations.value });
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -107,15 +121,15 @@ const onRowEditSave = async (event) => {
 
     try {
         // Determine the active tab and update the corresponding data source
-        if (activeTab.value === 'Users') {
+        if (activeTab.value === 'users') {
             await PAS.patch(`/users/${newData.id}`, newData);
             const index = users.value.findIndex((user) => user.id === newData.id);
             if (index !== -1) users.value[index] = newData;
-        } else if (activeTab.value === 'Companies') {
+        } else if (activeTab.value === 'companies') {
             await PAS.patch(`/companies/${newData.id}`, newData);
             const index = companies.value.findIndex((company) => company.id === newData.id);
             if (index !== -1) companies.value[index] = newData;
-        } else if (activeTab.value === 'Contacts') {
+        } else if (activeTab.value === 'contacts') {
             await PAS.patch(`/contacts/${newData.id}`, newData);
             const index = contacts.value.findIndex((contact) => contact.id === newData.id);
             if (index !== -1) contacts.value[index] = newData;
@@ -172,12 +186,14 @@ const addUser = async () => {
         console.error('Error adding user:', error);
     }
 };
+
 // Handle the row-deleted event
-const handleRowDeleted = (userId) => {
-    const index = users.value.findIndex((user) => user.id === userId);
-    if (index !== -1) {
-        users.value.splice(index, 1); // Update the local data array
-    }
+const handleRowDeleted = () => {
+    fetchData();
+};
+
+const handleNewRowCreated = () => {
+    fetchData();
 };
 </script>
 
@@ -185,15 +201,20 @@ const handleRowDeleted = (userId) => {
     <div class="admin-panel">
         <!-- Header with Tabs -->
         <header class="admin-header">
-            <button @click="switchTab('Users')" :class="{ active: activeTab === 'Users' }">Gosti</button>
-            <button @click="switchTab('Companies')" :class="{ active: activeTab === 'Companies' }">Tvrtke</button>
-            <button @click="switchTab('Contacts')" :class="{ active: activeTab === 'Contacts' }">Kontakt osobe</button>
+            <button @click="switchTab('users')" :class="{ active: activeTab === 'users' }">Gosti</button>
+            <button @click="switchTab('companies')" :class="{ active: activeTab === 'companies' }">Tvrtke</button>
+            <button @click="switchTab('contacts')" :class="{ active: activeTab === 'contacts' }">Kontakt osobe</button>
+            <button @click="switchTab('visitPurposes')" :class="{ active: activeTab === 'visitPurposes' }">Razlozi
+                dolaska</button>
+            <button @click="switchTab('translations')"
+                :class="{ active: activeTab === 'translations' }">Prijevodi</button>
         </header>
 
         <!-- Tab Content -->
         <div class="tab-content">
-            <DataTableVue :data="users" :displayDetails="userColumns" :currently-displaying='"users"'
-                @row-deleted="handleRowDeleted" />
+            <DataTable :data="currentData" :displayDetails="currentColumns"
+                :currently-displaying="activeTab.toLowerCase()" @newItemCreated="handleNewRowCreated"
+                @row-deleted="handleRowDeleted" @updateItem="handleRowDeleted" />
         </div>
     </div>
 </template>
@@ -202,7 +223,7 @@ const handleRowDeleted = (userId) => {
 .admin-panel {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 80vh;
 }
 
 .admin-header {

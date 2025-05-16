@@ -9,6 +9,7 @@ if (!PAS) {
 } else {
   // console.log('PAS instanca povezana.');
 }
+import { oepas_dev2 } from '@/utils/pas-util';
 
 if (!window.location.origin) {
   window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');

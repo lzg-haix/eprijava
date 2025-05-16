@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import DeleteDialog from './DeleteDialog.vue';
+import InfoDialog from './InfoDialog.vue';
 
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
@@ -69,46 +71,150 @@ const previewRow = () => {
 };
 
 // brisanje
-const emit = defineEmits(['row-deleted']); // Define an event to notify the parent
-const deleteRow = async (item) => {
+const emit = defineEmits(['row-deleted', 'updateItem']); // Define an event to notify the parent
+
+const showDeleteDialog = ref(false);
+const itemToDelete = ref(null);
+const passedItem = ref('');
+
+const confirmDelete = (item) => {
+    itemToDelete.value = item;
+    showDeleteDialog.value = true;
+    switch (props.currentlyDisplaying) {
+        case 'users':
+            passedItem.value = itemToDelete.value.fullName;
+            break;
+        case 'companies':
+            passedItem.value = itemToDelete.value.name;
+            break;
+        case 'contacts':
+            passedItem.value = itemToDelete.value.fullName;
+            break;
+        // case 'languages':
+        //     passedItem.value = itemToDelete.value.fullName;
+        //     break;
+        // case 'languageSets':
+        //     passedItem.value = itemToDelete.value.fullName;
+        //     break;
+    };
+}
+
+const deleteRow = async () => {
     try {
-        const userId = item.id; // Assuming `id` is the unique identifier
-        await PAS.delete(`/users/${userId}`); // Replace `/users` with your actual API endpoint
+        const itemID = itemToDelete.value.id;
+        await PAS.delete(`/${props.currentlyDisplaying}/${itemID}`); // brisanje zapisa preko API-ja
 
-        // Emit an event to notify the parent component
-        emit('row-deleted', userId);
+        emit('row-deleted', itemID); // emit event za obavijest o brisanju
 
-        console.log(`User with ID ${userId} deleted successfully.`);
+        console.log(`User with ID ${itemID} deleted successfully.`);
     } catch (error) {
         console.error('Error deleting user:', error);
+    } finally {
+        showDeleteDialog.value = false; // zatvori dijalog nakon brisanja
+        itemToDelete.value = null; // resetiraj itemToDelete
     }
 };
+
+// dodavanje / izmjene
+const handleUpdateItem = async (updatedItem) => {
+    try {
+        await PAS.put(`/${props.currentlyDisplaying}/${updatedItem.id}`, updatedItem);
+        showInfoDialog.value = false;
+        emit('updateItem', updatedItem); // emit event za obavijest o izmjeni
+        itemToEdit.value = {}; // resetiraj itemToEdit
+        console.log(`Item with ID ${updatedItem.id} updated successfully.`);
+    } catch (error) {
+        console.error('Error updating item:', error);
+    }
+};
+
+const handleNewItem = async (newlyCreatedItem) => {
+    try {
+        // Find the last used user ID and increment it for the new user
+        const lastItemId = props.data.length > 0 ? Math.max(...props.data.map(item => item.id)) : 0;
+        newlyCreatedItem.id = lastItemId + 1;
+        if (props.currentlyDisplaying === 'users') {
+            let uniquePinCode;
+            do {
+                uniquePinCode = Math.floor(1000 + Math.random() * 9000);
+            } while (props.data.some(data => data.pinCode === uniquePinCode));
+            newlyCreatedItem.pinCode = uniquePinCode;
+        }
+        await PAS.post(`/${props.currentlyDisplaying}`, newlyCreatedItem);
+        showInfoDialog.value = false;
+        emit('newItemCreated', newlyCreatedItem); // emit event za obavijest o izmjeni
+        console.log(`Item with ID ${newlyCreatedItem.id} created successfully.`);
+    } catch (error) {
+        console.error('Error updating item:', error);
+    }
+};
+
+const showInfoDialog = ref(false);
+const newOrEdit = ref(''); // 'new' ili 'edit'
+const itemToEdit = ref({});
+const editRow = async (item) => {
+    newOrEdit.value = 'edit';
+    itemToEdit.value = { ...item }; // Pass the full item object
+    showInfoDialog.value = true; // Open the dialog
+    console.log('Editing row:', itemToEdit.value);
+};
+
+const addRow = async () => {
+    newOrEdit.value = 'new';
+    showInfoDialog.value = true; // Open the dialog
+    console.log('Editing row:', itemToEdit.value);
+};
+
+// pretraživanje
+const searchQuery = ref('');
+const filteredData = computed(() => {
+    if (!searchQuery.value) {
+        return props.data; // ako je upit prazan, vrati sve podatke
+    }
+    return props.data.filter((item) => {
+        return fields.value.some((field) =>
+            String(item[field]).toLowerCase().includes(searchQuery.value.toLowerCase()) // pretražuje sve polja, case insensitive
+        );
+    });
+});
+
 </script>
 
 <template>
     <div class="wrapper">
         <div class="toolbar">
-            <i class="pi pi-user-plus" @click="newRow"></i>
-            <input type="text" id="search-bar" placeholder="Pretraži...">
+            <div class="add-user">
+                <i class="pi pi-user-plus" @click="addRow"></i>
+            </div>
+            <input type="text" id="search-bar" placeholder="Pretraži..." v-model="searchQuery" />
         </div>
         <table>
             <thead>
                 <tr class="table-header">
                     <th class="th-cell" v-for="header in headers" :key="header.id">{{ header }}</th>
-                    <th>Opcije</th>
+                    <th id="opcije">Opcije</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr class="table-row" v-for="item in data" :key="item.id">
+                <tr class="table-row" v-for="item in filteredData" :key="item.id">
                     <td class="td-cell" v-for="field in fields" :key="field">{{ item[field] }}</td>
                     <td class="td-button-cell">
-                        <i class="pi pi-user-edit" @click="editRow"></i>
-                        <i class="pi pi-user-minus" @click="deleteRow(item)"></i>
+                        <i class="pi pi-user-edit" @click="editRow(item)"></i>
+                        <i class="pi pi-user-minus" @click="confirmDelete(item)"></i>
                     </td>
                 </tr>
             </tbody>
         </table>
+
+        <!-- dijalog za dodavanje/izmjenu zapisa -->
+        <InfoDialog v-if="showInfoDialog" :newOrEdit="newOrEdit" :itemToEdit="itemToEdit"
+            @newItemCreated="handleNewItem" @updateItem="handleUpdateItem" :currentlyDisplaying="currentlyDisplaying"
+            @hideInfoDialog="showInfoDialog = false" />
+
+        <!-- dijalog za brisanje zapisa -->
+        <DeleteDialog v-if="showDeleteDialog" :itemToDelete=passedItem @row-deleted="deleteRow"
+            @hideDeleteDialog="showDeleteDialog = false" />
     </div>
 </template>
 
@@ -119,51 +225,67 @@ const deleteRow = async (item) => {
     width: 100%;
 }
 
+.toolbar {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    margin-bottom: 1em;
+}
+
+.pi-user-plus {
+    cursor: pointer;
+    margin-right: 3.33em;
+    color: limegreen;
+}
+
+.pi-user-edit {
+    color: yellow;
+}
+
+.pi-user-minus {
+    color: red;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
-    /* Ensures no gaps between table cells */
 }
 
 thead {
-    /* background-color: #f4f4f4; */
-    /* Optional: Add a background color for the header */
+    background-color: #0492D2;
 }
 
 th,
 td {
     text-align: left;
-    /* Align text to the left */
     padding: 8px;
-    /* Add padding for better readability */
     border: 1px solid #ddd;
-    /* Add borders for clarity */
+}
+
+#opcije {
+    text-align: center;
+    width: 7.5em;
 }
 
 th {
     font-weight: bold;
-    /* Make headers bold */
 }
 
-tbody tr:nth-child(even) {
-    /* background-color: #f9f9f9; */
-    /* Optional: Add alternating row colors */
-}
+/* tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+} */
 
 tbody tr:hover {
-    background-color: #f1f1f1;
-    /* Optional: Highlight row on hover */
+    background-color: #517ba3;
 }
 
 .td-button-cell {
     text-align: center;
-    /* Center-align buttons in the options column */
+    gap: 1em;
 }
 
 .td-button-cell i {
     cursor: pointer;
-    /* Show a pointer cursor for icons */
-    margin: 0 5px;
-    /* Add spacing between icons */
+    margin: 0 1em;
 }
 </style>
