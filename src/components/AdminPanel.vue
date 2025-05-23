@@ -7,9 +7,23 @@ if (!PAS) {
 } else {
     // console.log('PAS instanca povezana.');
 }
-import DataTable from './DataTable.vue';
 
-const activeTab = ref('users'); // Tracks the currently active tab
+// oepas_dev2 - razvojna instanca na dev-inpos serveru
+import { oepas_dev2 } from '@/utils/pas-util';
+if (!oepas_dev2) {
+    console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+    // console.log('PAS instanca povezana.');
+}
+
+import DataTable from './DataTable.vue';
+import LanguageTable from './LanguageTable.vue';
+
+const props = defineProps({
+    translations: Object, // prijevodi proslijeđeni iz App.vue
+});
+
+const activeTab = ref('Visitors'); // Tracks the currently active tab
 const editingRows = ref([]); // Tracks the rows being edited
 
 const items = ref([
@@ -27,37 +41,38 @@ const items = ref([
 const users = ref([]);
 const companies = ref([]);
 const contacts = ref([]);
-const translations = ref([]);
+const translations = ref([props.translations]);
+// console.log('translations:', translations.value);
 
 // Columns for each tab
 const userColumns = ref([
-    { field: 'fullName', header: 'Puno ime' },
-    { field: 'companyName', header: 'Tvrtka' },
-    { field: 'visitPurpose', header: 'Svrha posjete' },
-    { field: 'contactPerson', header: 'Kontakt osoba' },
+    { field: 'FullName', header: 'Puno ime' },
+    { field: 'CompanyName', header: 'Tvrtka' },
+    { field: 'VisitPurpose', header: 'Svrha posjete' },
+    { field: 'ContactPerson', header: 'Kontakt osoba' },
 ]);
 
 const companyColumns = ref([
-    { field: 'name', header: 'Tvrtka' },
+    { field: 'Name', header: 'Tvrtka' },
 ]);
 
 const contactColumns = ref([
-    { field: 'fullName', header: 'Puno ime' },
-    { field: 'email', header: 'Email' },
-    { field: 'phone', header: 'Mob.' },
+    { field: 'FullName', header: 'Puno ime' },
+    { field: 'Email', header: 'Email' },
+    { field: 'Phone', header: 'Mob.' },
 ]);
 
 const currentData = computed(() => {
-    if (activeTab.value === 'users') return users.value;
-    if (activeTab.value === 'companies') return companies.value;
-    if (activeTab.value === 'contacts') return contacts.value;
+    if (activeTab.value === 'Visitors') return users.value;
+    if (activeTab.value === 'Companies') return companies.value;
+    if (activeTab.value === 'Contacts') return contacts.value;
     return [];
 });
 
 const currentColumns = computed(() => {
-    if (activeTab.value === 'users') return userColumns.value;
-    if (activeTab.value === 'companies') return companyColumns.value;
-    if (activeTab.value === 'contacts') return contactColumns.value;
+    if (activeTab.value === 'Visitors') return userColumns.value;
+    if (activeTab.value === 'Companies') return companyColumns.value;
+    if (activeTab.value === 'Contacts') return contactColumns.value;
     return [];
 });
 
@@ -92,24 +107,25 @@ const switchTab = (tab) => {
     searchQuery.value = '';
     companySearchQuery.value = '';
     contactSearchQuery.value = '';
+    // console.log(activeTab.value);
 };
 
 // Fetch data from the backend
 const fetchData = async () => {
     try {
-        const [usersResponse, companiesResponse, contactsResponse, translationsResponse] = await Promise.all([
-            PAS.get('/users'),
-            PAS.get('/companies'),
-            PAS.get('/contacts'),
-            PAS.get('/translations'),
+        const [usersResponse, companiesResponse, contactsResponse] = await Promise.all([
+            oepas_dev2.get('/Visitors'),
+            oepas_dev2.get('/Companies'),
+            oepas_dev2.get('/Contacts'),
+            // oepas_dev2.get('/translations'),
         ]);
 
-        users.value = usersResponse.data;
-        companies.value = companiesResponse.data;
-        contacts.value = contactsResponse.data;
-        translations.value = translationsResponse.data;
+        users.value = usersResponse.data.dsVisitors.ttVisitors;
+        companies.value = companiesResponse.data.dsCompanies.ttCompanies;
+        contacts.value = contactsResponse.data.dsContacts.ttContacts;
+        // translations.value = translationsResponse.data;
 
-        console.log('Data fetched successfully:', { users: users.value, companies: companies.value, contacts: contacts.value, translations: translations.value });
+        // console.log('Data fetched successfully:', { users: users.value, companies: companies.value, contacts: contacts.value });
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -121,21 +137,21 @@ const onRowEditSave = async (event) => {
 
     try {
         // Determine the active tab and update the corresponding data source
-        if (activeTab.value === 'users') {
-            await PAS.patch(`/users/${newData.id}`, newData);
+        if (activeTab.value === 'Visitors') {
+            await PAS.patch(`/Visitors/${newData.id}`, newData);
             const index = users.value.findIndex((user) => user.id === newData.id);
             if (index !== -1) users.value[index] = newData;
-        } else if (activeTab.value === 'companies') {
-            await PAS.patch(`/companies/${newData.id}`, newData);
+        } else if (activeTab.value === 'Companies') {
+            await PAS.patch(`/Companies/${newData.id}`, newData);
             const index = companies.value.findIndex((company) => company.id === newData.id);
             if (index !== -1) companies.value[index] = newData;
-        } else if (activeTab.value === 'contacts') {
-            await PAS.patch(`/contacts/${newData.id}`, newData);
+        } else if (activeTab.value === 'Contacts') {
+            await PAS.patch(`/Contacts/${newData.id}`, newData);
             const index = contacts.value.findIndex((contact) => contact.id === newData.id);
             if (index !== -1) contacts.value[index] = newData;
         }
         // Debugging: Log the editingRows object
-        console.log('Row updated:', newData);
+        // console.log('Row updated:', newData);
     } catch (error) {
         console.error('Error updating row:', error);
     }
@@ -172,7 +188,7 @@ const addUser = async () => {
         newUser.value.pinCode = uniquePinCode;
 
         // Make a POST request to create a new user
-        const response = await PAS.post('/users', newUser.value);
+        const response = await PAS.post('/Visitors', newUser.value);
 
         // Add the newly created user to the users list
         users.value.push(response.data);
@@ -181,7 +197,7 @@ const addUser = async () => {
         newUser.value = {};
         userDialog.value = false;
 
-        console.log('User added successfully:', response.data);
+        // console.log('User added successfully:', response.data);
     } catch (error) {
         console.error('Error adding user:', error);
     }
@@ -201,20 +217,18 @@ const handleNewRowCreated = () => {
     <div class="admin-panel">
         <!-- Header with Tabs -->
         <header class="admin-header">
-            <button @click="switchTab('users')" :class="{ active: activeTab === 'users' }">Gosti</button>
-            <button @click="switchTab('companies')" :class="{ active: activeTab === 'companies' }">Tvrtke</button>
-            <button @click="switchTab('contacts')" :class="{ active: activeTab === 'contacts' }">Kontakt osobe</button>
-            <button @click="switchTab('visitPurposes')" :class="{ active: activeTab === 'visitPurposes' }">Razlozi
-                dolaska</button>
-            <button @click="switchTab('translations')"
-                :class="{ active: activeTab === 'translations' }">Prijevodi</button>
+            <button @click="switchTab('Visitors')" :class="{ active: activeTab === 'Visitors' }">Gosti</button>
+            <button @click="switchTab('Companies')" :class="{ active: activeTab === 'Companies' }">Tvrtke</button>
+            <button @click="switchTab('Contacts')" :class="{ active: activeTab === 'Contacts' }">Kontakt osobe</button>
+            <button @click="switchTab('Translations')"
+                :class="{ active: activeTab === 'Translations' }">Prijevodi</button>
         </header>
 
         <!-- Tab Content -->
         <div class="tab-content">
-            <DataTable :data="currentData" :displayDetails="currentColumns"
-                :currently-displaying="activeTab.toLowerCase()" @newItemCreated="handleNewRowCreated"
-                @row-deleted="handleRowDeleted" @updateItem="handleRowDeleted" />
+            <LanguageTable v-if="activeTab === 'Translations'" />
+            <DataTable v-else :data="currentData" :displayDetails="currentColumns" :currently-displaying="activeTab"
+                @newItemCreated="handleNewRowCreated" @row-deleted="handleRowDeleted" @updateItem="handleRowDeleted" />
         </div>
     </div>
 </template>
@@ -256,6 +270,11 @@ const handleNewRowCreated = () => {
 
 .tab-content {
     padding: 1em;
-    max-height: 75vh;
+    /* Remove max-height and overflow here */
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: 70vh;
 }
 </style>

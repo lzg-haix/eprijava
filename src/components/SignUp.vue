@@ -9,6 +9,14 @@ if (!PAS) {
   // console.log('PAS instanca povezana.');
 }
 
+// oepas_dev2
+import { oepas_dev2 } from '@/utils/pas-util';
+if (!oepas_dev2) {
+  console.error('*** oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+  // console.log('PAS instanca povezana.');
+}
+
 // input parametri iz MainPage.vue
 const props = defineProps({
   lang: { // trenutno odabrani jezik
@@ -37,6 +45,8 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['pushNewUser']);
+
 let onlineUsers = ref([]) // online korisnici
 let offlineUsers = ref([]) // offline korisnici 
 let companies = ref([]) // tvrtke
@@ -48,7 +58,7 @@ let ccontacts = ref([]) // kontakt osobe
 const filterOnlineUsers = async () => {
   try {
     // filtriraj online korisnike iz već dohvaćenih korisnika
-    onlineUsers.value = props.allUsers.filter(user => user.online);
+    onlineUsers.value = props.allUsers.filter(user => user.Online);
     console.log('Online korisnici uspješno filtrirani:', onlineUsers.value);
   } catch (error) {
     console.error('Došlo je do greške kod filtriranja online korisnika:', error);
@@ -59,7 +69,7 @@ const filterOnlineUsers = async () => {
 const filterOfflineUsers = async () => {
   try {
     // filtriraj offline korisnike iz već dohvaćenih korisnika
-    offlineUsers.value = props.allUsers.filter(user => !user.online);
+    offlineUsers.value = props.allUsers.filter(user => !user.Online);
     console.log('Offline korisnici uspješno filtrirani:', offlineUsers.value);
   } catch (error) {
     console.error('Došlo je do greške kod filtriranja offline korisnika:', error);
@@ -73,19 +83,19 @@ const suggestOfflineUsers = (query) => {
     return;
   }
 
-  filteredUsers.value = props.allUsers.filter(
+  filteredUsers.value = offlineUsers.value.filter(
     (user) =>
-      !user.online && // samo offline korisnici
-      user.fullName.toLowerCase().includes(query.toLowerCase()) // uskladi s inputom
+      !user.Online && // samo offline korisnici
+      user.FullName.toLowerCase().includes(query.toLowerCase()) // uskladi s inputom
   );
 };
 
 // dohvaćanje tvrtki
 const fetchCompanies = async () => {
   try {
-    const response = await PAS.get('/companies');
-    companies.value = response.data;
-    console.log('Tvrtke uspješno dohvaćene:', companies.value);
+    const response = await oepas_dev2.get('/Companies');
+    companies.value = response.data.dsCompanies.ttCompanies;
+    // console.log('Tvrtke uspješno dohvaćene:', companies.value);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja tvrtki:', error);
   }
@@ -99,40 +109,92 @@ const filterCompanies = (query) => {
   }
   // filtriraj tvrtke po imenu i spremi u filteredCompanies
   filteredCompanies.value = companies.value.filter((company) => // filteriraj tvrtke po imenu
-    company.name.toLowerCase().includes(query.toLowerCase()) // pretvori u mala slova i provjeri sadrži li query
+    company.Name.toLowerCase().includes(query.toLowerCase()) // pretvori u mala slova i provjeri sadrži li query
   );
-
 };
 
 // dohvaćanje razloga posjeta
 const fetchVisitPurposes = async () => {
   try {
-    const response = await PAS.get('/visitPurposes');
-    visitPurposes.value = response.data;
+    const response = await oepas_dev2.get('/VisitPurpose');
+    visitPurposes.value = response.data.dsVisitPurpose.ttVisitPurpose;
     console.log('Razlozi posjete uspješno dohvaćeni:', visitPurposes.value);
+    console.log('translations:', props.translations[props.lang]);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja razloga posjete:', error);
+  }
+};
+
+const favoriteVisitPurposes = computed(() =>
+  visitPurposes.value.filter(purpose => purpose.Favourite === "yes")
+);
+
+let languages = ref([]); // jezici
+
+const getLanguages = async () => {
+  try {
+    const response = await oepas_dev2.get('/Languages?filter=Active%20=%20yes'); // dohvati jezike
+    // filtriraj samo aktivne jezike i sortiraj prema redoslijedu
+    // console.log('*** oepas_dev2: response.data:', response);
+    languages.value = response.data.dsLanguages.ttLanguages
+      .filter((language) => language.Active) // uključi samo aktivne jezike
+      .sort((a, b) => a.order - b.order); // sortiraj prema redoslijedu
+    // console.log('*** oepas_dev2: Aktivni jezici uspješno dohvaćeni:', languages.value);
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja jezika:', error);
+  }
+};
+
+const visitPurposeTranslations = ref({});
+const fetchVisitPurposeTranslations = async () => {
+  try {
+
+    const response = await oepas_dev2.get('/LanguagesEntries');
+    const entries = response.data.dsLanguagesEntries.ttLanguagesEntries;
+
+    // Get all LanguageEntry IDs used in visitPurposes
+    const neededIds = new Set(visitPurposes.value.map(vp => String(vp.LanguageEntry)));
+    console.log('Potrebni ID-jevi:', neededIds);
+    // Filter only those entries that are needed for visit purposes and match current language
+    const currentLanguage = languages.value.find(l => l.LanguageCode === props.lang);
+    const currentLanguageId = currentLanguage ? currentLanguage.ID : null;
+
+    const filtered = entries.filter(entry =>
+      neededIds.has(String(entry.ID)) && entry.LanguageID === currentLanguageId
+    );
+    console.log('Filtrirani ID-jevi:', filtered);
+    // Build a lookup: { [LanguageEntry]: LangValue }
+    const map = {};
+    filtered.forEach(entry => {
+      map[String(entry.ID)] = entry.LangValue;
+    });
+    visitPurposeTranslations.value = map;
+    console.log('Prijevodi svrhe posjeta uspješno dohvaćeni:', visitPurposeTranslations.value);
+  } catch (error) {
+    console.error('Error fetching visit purpose translations:', error);
   }
 };
 
 // filtriranje razloga posjeta
 const filterVisitPurposes = (query) => {
   if (!query) {
-    filteredVisitPurposes.value = [];
+    // Only show favorites that have a translation
+    filteredVisitPurposes.value = favoriteVisitPurposes.value.filter(
+      purpose => visitPurposeTranslations.value[String(purpose.LanguageEntry)]
+    );
     return;
   }
-
-  filteredVisitPurposes.value = visitPurposes.value.filter((purpose) =>
-    purpose[props.lang].toLowerCase().includes(query.toLowerCase())
-  );
-
+  filteredVisitPurposes.value = visitPurposes.value.filter((purpose) => {
+    const translated = visitPurposeTranslations.value[String(purpose.LanguageEntry)];
+    return translated && translated.toLowerCase().includes(query.toLowerCase());
+  });
 };
 
 // dohvaćanje kontakt osoba
 const fetchContacts = async () => {
   try {
-    const response = await PAS.get('/contacts');
-    ccontacts.value = response.data;
+    const response = await oepas_dev2.get('/Contacts');
+    ccontacts.value = response.data.dsContacts.ttContacts;
     console.log('Kontakt osobe uspješno dohvaćene:', ccontacts.value);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja kontakt osoba:', error);
@@ -147,7 +209,7 @@ const filterContactPersons = (query) => {
   }
 
   filteredContactPersons.value = ccontacts.value.filter((contact) =>
-    contact.fullName.toLowerCase().includes(query.toLowerCase())
+    contact.FullName.toLowerCase().includes(query.toLowerCase())
   );
 };
 
@@ -179,7 +241,12 @@ const onChange = (inputValue) => {
 
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
-      filterVisitPurposes(inputValue);
+      // If input is empty, show favorites
+      if (!input.value) {
+        filteredVisitPurposes.value = favoriteVisitPurposes.value;
+      } else {
+        filterVisitPurposes(inputValue);
+      }
     }, debounceTime);
   } else if (step.value === 4) {
     contactPerson.value = inputValue // sinkronizira s poljem contactPerson ako je trenutni korak 4
@@ -193,14 +260,16 @@ const onChange = (inputValue) => {
 
 // ODABIR
 const selectVisitPurpose = (purpose) => {
-  visitPurpose.value = purpose[props.lang] // automatski popuni odabranu namjenu posjeta
-  input.value = purpose[props.lang] // sinkroniziraj s virtualnom tipkovnicom
-  filteredVisitPurposes.value = [] // očisti filtrirane namjene posjeta
-}
+  console.log('Odabrana svrha posjeta:', purpose);
+  console.log(visitPurposeTranslations.value[String(purpose.LanguageEntry)]);
+  visitPurpose.value = visitPurposeTranslations.value[String(purpose.LanguageEntry)] || '';
+  input.value = visitPurpose.value;
+  filteredVisitPurposes.value = [];
+};
 
 const selectCompany = (company) => {
-  companyName.value = company.name; // automatski popuni za odabranu tvrtku
-  input.value = company.name; // sinkroniziraj odabranu tvrtku s virtualnom tipkovnicom
+  companyName.value = company.Name; // automatski popuni za odabranu tvrtku
+  input.value = company.Name; // sinkroniziraj odabranu tvrtku s virtualnom tipkovnicom
   filteredCompanies.value = []; // očisti filtrirane tvrtke
   selectedCompany.value = company; // označi odabranu tvrtku
 };
@@ -208,16 +277,17 @@ const selectCompany = (company) => {
 const selectedContactPerson = ref(null); // pohrani odabranu kontakt osobu kao objekt
 
 const selectContactPerson = (person) => {
-  contactPerson.value = person.fullName; // automatski popuni polje s punim imenom
-  input.value = person.fullName; // sinkroniziraj s virtualnom tipkovnicom
+  contactPerson.value = person.FullName; // automatski popuni polje s punim imenom
+  input.value = person.FullName; // sinkroniziraj s virtualnom tipkovnicom
   filteredContactPersons.value = []; // očisti prijedloge
   selectedContactPerson.value = person; // pohrani cijeli objekt kontakt osobe
+  console.log('Odabrana kontakt osoba:', selectedContactPerson.value); // ispiši u konzolu
 };
 
 // Function to select a user from the suggestions
 const selectUser = (user) => {
-  fullName.value = user.fullName; // Autofill the full name
-  input.value = user.fullName; // Sync with the virtual keyboard
+  fullName.value = user.FullName; // Autofill the full name
+  input.value = user.FullName; // Sync with the virtual keyboard
   filteredUsers.value = []; // Clear the suggestions
 };
 
@@ -303,6 +373,7 @@ const nextStep = async () => {
       } else {
         step.value = 7;
         companyName.value = '';
+        selectedCompany.value = null;
         setTimeout(() => {
           props.goToMainPage();
         }, 5000);
@@ -333,29 +404,59 @@ const setAdditionalVisitor = (bool) => { // postavi dodatnog gosta
 const handleSignUp = async () => {
   try {
     // dohvati ID++
-    const nextId = props.allUsers.length > 0 ? Math.max(...props.allUsers.map(user => user.id)) + 1 : 1;
+    const nextId = props.allUsers.length > 0 ? Math.max(...props.allUsers.map(user => user.ID)) + 1 : 1;
 
     // novi objekt korisnika
     const newUser = {
-      id: nextId,
-      fullName: fullName.value,
-      companyName: companyName.value,
-      visitPurpose: visitPurpose.value,
-      contactPerson: contactPerson.value,
-      gdprAgreement: gdprAgreement.value,
-      pinCode: pinCode.value,
-      online: true,
+      dsVisitors: {
+        ttVisitors: [
+          {
+            ID: nextId,
+            FullName: fullName.value,
+            companyName: companyName.value,
+            visitPurpose: visitPurpose.value,
+            contactPerson: contactPerson.value,
+            gdprAgreement: gdprAgreement.value,
+            pinCode: pinCode.value,
+            online: true
+          }
+        ]
+      }
     };
 
-    // console.log('New user object:', newUser);
-
     // POST request
-    const response = await PAS.post('/users', newUser);
+    const response = await oepas_dev2.post('/Visitors', newUser);
     if (response && response.data) {
       console.log('Novi korisnik:', response.data);
+      emit('pushNewUser', response.data.dsVisitors.ttVisitors); // emit event za obavijest o novom korisniku
     } else {
       console.error('Neočekivani response format:', response);
     }
+
+    // podaci o posjetu
+    // const newVisitEntry = {
+    //   dsVisitor_Company_Contact: {
+    //     ttVisitor_Company_Contact: [
+    //       {
+    //         VisitorID: nextId,
+    //         CompanyID: selectedCompany.value.ID,
+    //         ContactID: selectedContactPerson.value.ID,
+    //         ArrivalDateTime: new Date().toISOString(),
+    //         DepartureDateTime: null,
+    //         VisitPurpose: visitPurpose.value,
+    //         Inserted: new Date().toISOString(),
+    //         Updated: new Date().toISOString(),
+    //       }
+    //     ]
+    //   }
+    // }
+
+    // const newEntryResponse = await oepas_dev2.post('/Visitor_Company_Contact', newVisitEntry);
+    // if (newEntryResponse && newEntryResponse.data) {
+    //   console.log('Novi korisnik:', newEntryResponse.data);
+    // } else {
+    //   console.error('Neočekivani response format:', newEntryResponse);
+    // }
 
     // resetiraj forme
     step.value = 1;
@@ -390,17 +491,23 @@ const generatePinCode = () => {
 }
 
 const gdprText = computed(() => {
-  return props.translations[props.lang]?.gdprPoints || [];
+  const points = props.translations[props.lang]?.gdprPoints || '';
+  return points.split('.').map(s => s.trim()).filter(Boolean);
 });
 
 onMounted(async () => {
   await filterOnlineUsers(); // filtriraj online korisnike
   await filterOfflineUsers(); // filtriraj offline korisnike
   await fetchCompanies(); // dohvati tvrtke
-  await fetchVisitPurposes(); // dohvati namjene posjeta
+  await fetchVisitPurposes();
+  await getLanguages(); // dohvati jezike
+  await fetchVisitPurposeTranslations(); // dohvati prijevode namjena posjeta
   await fetchContacts(); // dohvati kontakt osobe
-  console.log('Svi korisnici:', props.allUsers);
-  console.log('Prijevodi: ', props.translations)
+  filteredVisitPurposes.value = favoriteVisitPurposes.value.filter(
+    purpose => visitPurposeTranslations.value[String(purpose.LanguageEntry)]
+  );
+  // console.log('Svi korisnici:', props.allUsers);
+  // console.log('Prijevodi: ', props.translations)
   if (props.currentState === 2) {
     // Pre-fill visit purpose and contact person for logged-in user
     visitPurpose.value = props.loggedInUser?.visitPurpose || '';
@@ -422,12 +529,12 @@ onMounted(async () => {
         <div class="input-button-row">
           <input type="text" id="fullName" v-model="fullName" ref="fullNameInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-          }}</button>
+              }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="user-suggestions" v-if="filteredUsers.length">
-          <div class="user-card" v-for="user in filteredUsers" :key="user.id" @click="selectUser(user)">
-            {{ user.fullName }}
+          <div class="user-card" v-for="user in filteredUsers" :key="user.ID" @click="selectUser(user)">
+            {{ user.FullName }}
           </div>
         </div>
       </div>
@@ -439,13 +546,13 @@ onMounted(async () => {
           <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
           <input type="text" id="companyName" v-model="companyName" ref="companyNameInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-          }}</button>
+              }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="company-suggestions" v-if="filteredCompanies.length">
           <div class="company-card" v-for="company in filteredCompanies" :key="company.id"
             @click="selectCompany(company)">
-            {{ company.name }}
+            {{ company.Name }}
           </div>
         </div>
       </div>
@@ -457,13 +564,13 @@ onMounted(async () => {
           <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
           <input type="text" id="visitPurpose" v-model="visitPurpose" ref="visitPurposeInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-          }}</button>
+              }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="visit-purpose-suggestions" v-if="filteredVisitPurposes.length">
-          <div class="visit-purpose-card" v-for="purpose in filteredVisitPurposes" :key="purpose.id"
+          <div class="visit-purpose-card" v-for="purpose in filteredVisitPurposes" :key="purpose.ID"
             @click="selectVisitPurpose(purpose)">
-            {{ purpose[props.lang] }}
+            {{ visitPurposeTranslations[String(purpose.LanguageEntry)] || '[Nema prijevoda]' }}
           </div>
         </div>
       </div>
@@ -479,9 +586,9 @@ onMounted(async () => {
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="contact-person-suggestions" v-if="filteredContactPersons.length">
-          <div class="contact-person-card" v-for="person in filteredContactPersons" :key="person.id"
+          <div class="contact-person-card" v-for="person in filteredContactPersons" :key="person.ID"
             @click="selectContactPerson(person)">
-            {{ person.fullName }}
+            {{ person.FullName }}
           </div>
         </div>
       </div>
@@ -498,7 +605,7 @@ onMounted(async () => {
           <label id="gdprAgreementCheckboxNote">{{ translations[lang].agreeToGdpr }}</label>
         </div>
         <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-            }}</button>
+        }}</button>
       </div>
 
       <!-- Step 6: Summary -->
@@ -509,10 +616,10 @@ onMounted(async () => {
         <p><strong>{{ translations[lang].visitPurpose }}:</strong> {{ visitPurpose }}</p>
         <p><strong>{{ translations[lang].contactPerson }}:</strong> {{ contactPerson }}</p>
         <p v-if="selectedContactPerson">
-          <strong>Email:</strong> {{ selectedContactPerson.email }}
+          <strong>Email:</strong> {{ selectedContactPerson.Email }}
         </p>
         <p v-if="selectedContactPerson">
-          <strong>Mob:</strong> {{ selectedContactPerson.phone }}
+          <strong>Mob:</strong> {{ selectedContactPerson.Phone }}
         </p>
         <p id="pince"><strong>{{ translations[lang].summaryPinCode }}</strong> {{ pinCode }}</p>
         <p>{{ translations[lang].badgePrinting }}</p>

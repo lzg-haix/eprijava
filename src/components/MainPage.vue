@@ -4,11 +4,18 @@ import SignUp from './SignUp.vue'
 import LogIn from './LogIn.vue'
 import LogOut from './LogOut.vue'
 import AdminPanel from './AdminPanel.vue'
-// import registeredUsers from '../assets/registeredUsers.json'
 
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
   console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+  // console.log('PAS instanca povezana.');
+}
+
+// oepas_dev2 - razvojna instanca na dev-inpos serveru
+import { oepas_dev2 } from '@/utils/pas-util';
+if (!oepas_dev2) {
+  console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
 } else {
   // console.log('PAS instanca povezana.');
 }
@@ -18,66 +25,62 @@ const props = defineProps({
   lang: String, // trenutni jezik
   updatePageTitle: Function, // funkcija za ažuriranje naslova stranice
   translations: Object, // prijevodi proslijeđeni iz App.vue
+  currentView: Number, // trenutni prikaz (0 - dobrodošlica, 1 - registracija, 2 - prijava, 3 - odjava, 4 - admin panel)
+  setCurrentView: Function // funkcija za postavljanje trenutnog prikaza
 })
 
-let allUsers = ref([]) // svi korisnici
-let onlineUsers = ref([]) // online korisnici
-let offlineUsers = ref([]) // offline korisnici, proslijeđuju se na registraciju i prijavu
-
 // dohvaćanje svih korisnika preko API-ja
-const fetchAllUsers = async () => {
+let allUsers = ref([])
+const getAllUsers = async () => {
   try {
-    const response = await PAS.get('/users'); // Dohvati sve korisnike iz db.json
-    allUsers.value = response.data; // Spremi sve korisnike
-    console.log('Svi korisnici uspješno dohvaćeni:', allUsers.value);
+    const response = await oepas_dev2.get('/Visitors');
+    allUsers.value = response.data.dsVisitors.ttVisitors;
   } catch (error) {
-    console.error('Došlo je do greške kod dohvaćanja svih korisnika:', error);
+    console.error('*** oepas_dev2: Došlo je do greške kod dohvaćanja svih korisnika:', error);
   }
 };
 
 // filtriranje online korisnika
+let onlineUsers = ref([])
 const filterOnlineUsers = async () => {
   try {
     // filtriraj online korisnike iz već dohvaćenih korisnika
-    onlineUsers.value = allUsers.value.filter(user => user.online);
-    // console.log('Online korisnici uspješno filtrirani:', onlineUsers.value);
+    onlineUsers.value = allUsers.value.filter(user => user.Online);
   } catch (error) {
     console.error('Došlo je do greške kod filtriranja online korisnika:', error);
   }
 };
 
 // filtriranje offline korisnika
+let offlineUsers = ref([]) // offline korisnici, proslijeđuju se na registraciju i prijavu
 const filterOfflineUsers = async () => {
   try {
-    // filtriraj offline korisnike iz već dohvaćenih korisnika
-    offlineUsers.value = allUsers.value.filter(user => !user.online);
-    // console.log('Offline korisnici uspješno filtrirani:', offlineUsers.value);
+    offlineUsers.value = allUsers.value.filter(user => !user.Online);
   } catch (error) {
     console.error('Došlo je do greške kod filtriranja offline korisnika:', error);
   }
 };
 
 // konsolidirani poziv za metode za dohvaćanje i filtriranje korisnika
-const getUsers = async () => { // pri montiranju komponente
+const getUsers = async () => {
   try {
-    await fetchAllUsers(); // dohvaćanje svih korisnika
-    await filterOnlineUsers(); // filtriranje online korisnika
-    await filterOfflineUsers(); // filtriranje offline korisnika
+    await getAllUsers();
+    await filterOnlineUsers();
+    await filterOfflineUsers();
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja svih korisnika:', error);
   }
 }
 
-const currentView = ref(4); // pratimo trenutni prikaz
+//const currentView = ref(0); // trenutni prikaz (0 - dobrodošlica, 1 - registracija, 2 - prijava, 3 - odjava, 4 - admin panel)
 
 // prikaži određeni prikaz i ažuriraj naslov stranice
 const showView = (view, titleKey) => {
-  currentView.value = view;
+  props.setCurrentView(view, titleKey); // postavi trenutni prikaz
   props.updatePageTitle(titleKey); // proslijedi ključ za prijevod naslova
 };
 
 onMounted(async () => {
-  // potegne i filtrira korisnike
   await getUsers();
 });
 
@@ -92,11 +95,11 @@ onMounted(async () => {
       <button @click="showView(4, 'adminPanel')">admin</button>
     </div>
     <SignUp v-else-if="currentView === 1" :lang="lang" :allUsers="allUsers" :translations="translations"
-      :goToMainPage="() => showView(0, 'welcome')" :currentState="1" />
+      :goToMainPage="() => showView(0, 'welcome')" :currentState="1" @pushNewUser="getUsers()" />
     <LogIn v-else-if="currentView === 2" :lang="lang" :offlineUsers="offlineUsers" :translations="translations"
       :goToMainPage="() => showView(0, 'welcome')" />
     <LogOut v-else-if="currentView === 3" />
-    <AdminPanel v-else-if="currentView === 4" />
+    <AdminPanel v-else-if="currentView === 4" :translations="translations" />
   </div>
 </template>
 
@@ -126,7 +129,7 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10em;
+  gap: 1em;
   margin-top: 5.5rem;
 }
 

@@ -10,6 +10,14 @@ if (!PAS) {
     // console.log('PAS instanca povezana.');
 }
 
+// oepas_dev2 - razvojna instanca na dev-inpos serveru
+import { oepas_dev2 } from '@/utils/pas-util';
+if (!oepas_dev2) {
+    console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+    // console.log('PAS instanca povezana.');
+}
+
 const props = defineProps({
     data: {
         type: Array,
@@ -28,19 +36,19 @@ const props = defineProps({
 const whatToDisplay = ref();
 const setDisplay = async () => {
     switch (props.currentlyDisplaying) {
-        case 'users':
+        case 'Visitors':
             whatToDisplay.value = 1;
             break;
-        case 'companies':
+        case 'Companies':
             whatToDisplay.value = 2;
             break;
-        case 'contacts':
+        case 'Contacts':
             whatToDisplay.value = 3;
             break;
-        case 'languages':
+        case 'Languages':
             whatToDisplay.value = 4;
             break;
-        case 'languageSets':
+        case 'LanguageSets':
             whatToDisplay.value = 5;
             break;
         default:
@@ -77,18 +85,68 @@ const showDeleteDialog = ref(false);
 const itemToDelete = ref(null);
 const passedItem = ref('');
 
+const objectToDelete = ref({});
+
 const confirmDelete = (item) => {
     itemToDelete.value = item;
     showDeleteDialog.value = true;
     switch (props.currentlyDisplaying) {
-        case 'users':
-            passedItem.value = itemToDelete.value.fullName;
+        case 'Visitors':
+            passedItem.value = itemToDelete.value.FullName;
+            objectToDelete.value = {
+                dsVisitors: {
+                    ttVisitors: [
+                        {
+                            ID: itemToDelete.value.ID,
+                            FullName: itemToDelete.value.FullName,
+                            CompanyName: itemToDelete.value.CompanyName,
+                            VisitPurpose: itemToDelete.value.VisitPurpose,
+                            ContactPerson: itemToDelete.value.ContactPerson,
+                            GDPRAgreement: itemToDelete.value.GDPRAgreement,
+                            PinCode: itemToDelete.value.PinCode,
+                            Online: itemToDelete.value.Online
+                        }
+                    ]
+                }
+            }
             break;
-        case 'companies':
-            passedItem.value = itemToDelete.value.name;
+        case 'Companies':
+            passedItem.value = itemToDelete.value.Name;
+            objectToDelete.value = {
+                dsCompanies: {
+                    ttCompanies: [
+                        {
+                            ID: itemToDelete.value.ID,
+                            Name: itemToDelete.value.Name,
+                            Address: itemToDelete.value.Address,
+                            City: itemToDelete.value.City,
+                            Country: itemToDelete.value.Country,
+                            VATNumber: itemToDelete.value.VATNumber
+                        }
+                    ]
+                }
+            }
             break;
-        case 'contacts':
-            passedItem.value = itemToDelete.value.fullName;
+        case 'Contacts':
+            passedItem.value = itemToDelete.value.FullName;
+            objectToDelete.value = {
+                dsContacts: {
+                    ttContacts: [
+                        {
+                            ID: itemToDelete.value.ID,
+                            FullName: itemToDelete.value.FullName,
+                            Email: itemToDelete.value.Email,
+                            Phone: itemToDelete.value.Phone,
+                            Active: itemToDelete.value.Active,
+                            Inserted: itemToDelete.value.Inserted,
+                            Updated: itemToDelete.value.Updated,
+                            InsertUser: itemToDelete.value.InsertUser,
+                            UpdateUser: itemToDelete.value.UpdateUser,
+                            Department: itemToDelete.value.Department
+                        }
+                    ]
+                }
+            }
             break;
         // case 'languages':
         //     passedItem.value = itemToDelete.value.fullName;
@@ -101,12 +159,13 @@ const confirmDelete = (item) => {
 
 const deleteRow = async () => {
     try {
-        const itemID = itemToDelete.value.id;
-        await PAS.delete(`/${props.currentlyDisplaying}/${itemID}`); // brisanje zapisa preko API-ja
+        const itemID = itemToDelete.value.ID;
+        console.log('Deleting item with ID:', objectToDelete.value);
+        await oepas_dev2.delete(`/${props.currentlyDisplaying}`, objectToDelete.value); // brisanje zapisa preko API-ja
 
         emit('row-deleted', itemID); // emit event za obavijest o brisanju
 
-        console.log(`User with ID ${itemID} deleted successfully.`);
+        console.log(`Item with ID ${itemID} deleted successfully.`);
     } catch (error) {
         console.error('Error deleting user:', error);
     } finally {
@@ -191,13 +250,13 @@ const filteredData = computed(() => {
         <table>
             <thead>
                 <tr class="table-header">
-                    <th class="th-cell" v-for="header in headers" :key="header.id">{{ header }}</th>
+                    <th class="th-cell" v-for="header in headers" :key="header.ID">{{ header }}</th>
                     <th id="opcije">Opcije</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr class="table-row" v-for="item in filteredData" :key="item.id">
+                <tr class="table-row" v-for="item in filteredData" :key="item.ID">
                     <td class="td-cell" v-for="field in fields" :key="field">{{ item[field] }}</td>
                     <td class="td-button-cell">
                         <i class="pi pi-user-edit" @click="editRow(item)"></i>

@@ -26,23 +26,31 @@ onMounted(() => {
 const itemFields = ref(null);
 function getItemFields(currentItem) {
     switch (currentItem) {
-        case 'users':
+        case 'Visitors':
             return [
-                { header: 'ID', field: 'id' },
-                { header: 'Ime i prezime', field: 'fullName' },
-                { header: 'Tvrtka', field: 'companyName' },
-                { header: 'Svrha posjeta', field: 'visitPurpose' },
-                { header: 'Kontakt', field: 'contactPerson' },
-                { header: 'GDPR', field: 'gdprAgreement' },
-                { header: 'PIN', field: 'pinCode' },
-                { header: 'Online', field: 'online' }
+                { header: 'ID', field: 'ID' },
+                { header: 'Ime i prezime', field: 'FullName' },
+                { header: 'Tvrtka', field: 'CompanyName' },
+                { header: 'Svrha posjeta', field: 'VisitPurpose' },
+                { header: 'Kontakt', field: 'ContactPerson' },
+                { header: 'GDPR', field: 'GDPRAgreement' },
+                { header: 'PIN', field: 'PINCode' },
+                { header: 'Online', field: 'Online' }
             ];
-        case 'companies':
+        case 'Companies':
             return [
-                { header: 'ID', field: 'id' },
-                { header: 'Tvrtka', field: 'name' }
+                { header: 'ID', field: 'ID' },
+                { header: 'Tvrtka', field: 'Name' }
             ];
-        case 'contacts':
+        case 'Contacts':
+            return [
+                { header: 'ID', field: 'ID' },
+                { header: 'Ime i prezime', field: 'FullName' },
+                { header: 'E-mail', field: 'Email' },
+                { header: 'Mob', field: 'Phone' },
+                { header: 'Odjel', field: 'Department' }
+            ];
+        case 'VisitPurposes':
             return [
                 { header: 'ID', field: 'id' },
                 { header: 'Ime i prezime', field: 'fullName' },
@@ -50,24 +58,11 @@ function getItemFields(currentItem) {
                 { header: 'Mob', field: 'phone' },
                 { header: 'Odjel', field: 'department' }
             ];
-        case 'visitPurposes':
+        case 'LanguagesEntries':
             return [
-                { header: 'ID', field: 'id' },
-                { header: 'Ime i prezime', field: 'fullName' },
-                { header: 'E-mail', field: 'email' },
-                { header: 'Mob', field: 'phone' },
-                { header: 'Odjel', field: 'department' }
+                { header: 'Slog', field: 'EntryName' },
+                { header: 'Vrijednost', field: 'LangValue' }
             ];
-        // case 'languages':
-        //     return [
-        //         { header: 'ID', field: 'id' },
-        //         { header: 'Naziv jezika', field: 'languageName' },
-        //     ];
-        // case 'languageSets':
-        //     return [
-        //         { header: 'ID', field: 'id' },
-        //         { header: 'Naziv seta jezika', field: 'setName' },
-        //     ];
         default:
             console.warn('Unknown currentlyDisplaying value:', currentItem);
             return null;
@@ -120,7 +115,7 @@ const saveItem = () => {
                 <!-- novi zapis -->
                 <!-- izostavljen ID jer se automatski dodijeli -->
                 <div v-if="(itemFields && props.newOrEdit === 'new')">
-                    <div v-for="field in itemFields.filter(f => f.field !== 'id')" :key="field.field"
+                    <div v-for="field in itemFields.filter(f => f.field !== 'ID')" :key="field.field"
                         class="form-group">
                         <label :for="field.field">{{ field.header }}: </label>
                         <div v-if="field.field === 'online' || field.field === 'gdprAgreement'">
@@ -136,10 +131,10 @@ const saveItem = () => {
                 <!-- izmjena zapisa -->
                 <p v-if="props.newOrEdit === 'edit'" style="font-weight: bold">Izmjeni zapis</p>
                 <div v-if="itemFields && props.newOrEdit === 'edit'">
-                    <div v-for="field in itemFields.filter(f => f.field !== 'id')" :key="field.field"
+                    <div v-for="field in itemFields.filter(f => f.field !== 'ID')" :key="field.field"
                         class="form-group">
                         <label :for="field.field">{{ field.header }}: </label>
-                        <div v-if="field.field === 'online' || field.field === 'gdprAgreement'">
+                        <div v-if="field.field === 'Online' || field.field === 'GDPRAgreement'">
                             <input :id="field.field" v-model="localItem[field.field]" type="checkbox"
                                 :checked="!!itemToEdit[field.field]" />
                         </div>

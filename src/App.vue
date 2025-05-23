@@ -3,14 +3,23 @@ import { ref, onMounted, watch } from 'vue';
 import MainPage from './components/MainPage.vue';
 import 'flag-icons/css/flag-icons.min.css';
 
+// json-server
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
-  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js.');
+  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
 } else {
   // console.log('PAS instanca povezana.');
 }
-import { oepas_dev2 } from '@/utils/pas-util';
 
+// oepas_dev2 - razvojna instanca na dev-inpos serveru
+import { oepas_dev2 } from '@/utils/pas-util';
+if (!oepas_dev2) {
+  console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+  // console.log('PAS instanca povezana.');
+}
+
+// pizdarija za IE11
 if (!window.location.origin) {
   window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
 }
@@ -20,29 +29,38 @@ let welcomeMessage = ref(''); // poruka dobrodošlice
 let currentLang = ref('hr'); // defaultni jezik je hrvatski
 let pageTitle = ref(''); // naslov stranice
 let currentTitleKey = ref('welcome'); // defaultni ključ naslova
-let translations = ref({}); // prijevodi
-let languages = ref([]); // jezici
 
-// dohvaćanje jezika preko API-ja
-const fetchLanguages = async () => {
+// dohvaćanje jezika
+let languages = ref([]); // jezici
+let translations = ref({}); // prijevodi
+
+const getLanguages = async () => {
   try {
-    const response = await PAS.get('/languages'); // dohvati jezike
-    // filtriraj samo aktivne jezike i sortiraj prema redoslijedu
-    languages.value = response.data
-      .filter((language) => language.active) // uključi samo aktivne jezike
+    const response = await oepas_dev2.get('/Languages?filter=Active%20=%20yes');
+    languages.value = response.data.dsLanguages.ttLanguages
+      .filter((language) => language.Active) // uključi samo aktivne jezike
       .sort((a, b) => a.order - b.order); // sortiraj prema redoslijedu
-    console.log('Aktivni jezici uspješno dohvaćeni:', languages.value);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja jezika:', error);
   }
 };
 
 // dohvaćanje prijevoda preko API-ja
-const fetchTranslations = async () => {
+const getTranslations = async () => {
   try {
-    const response = await PAS.get('/translations');
-    translations.value = response.data;
-    console.log('Prijevodi uspješno dohvaćeni:', translations.value);
+    const response = await oepas_dev2.get('/LanguagesEntries');
+    const entries = response.data.dsLanguagesEntries.ttLanguagesEntries;
+    const langMap = {};
+
+    entries.forEach(entry => {
+      const lang = languages.value.find(l => l.ID === entry.LanguageID);
+      if (!lang) return;
+      const code = lang.LanguageCode;
+      if (!langMap[code]) langMap[code] = {};
+      langMap[code][entry.EntryName] = entry.LangValue;
+    });
+    translations.value = langMap;
+    // console.log('Prijevodi:', translations.value);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja prijevoda:', error);
   }
@@ -50,22 +68,24 @@ const fetchTranslations = async () => {
 
 // promjena jezika
 const changeLanguage = (lang) => {
-  currentLang.value = lang; // postavi trenutni jezik
-  if (translations.value[lang]) {
-    welcomeMessage.value = translations.value[lang].welcome; // apdejtaj poruku dobrodošlice
-    // console.log(`Jezik je postavljen na "${lang}".`);
+  currentLang.value = lang;
+  if (translations.value[lang] && translations.value[lang].welcome) {
+    welcomeMessage.value = translations.value[lang].welcome;
   } else {
-    console.warn(`Prijevod za jezik "${lang}" nije pronađen.`); // upozorenje ako jezik nije podržan
+    welcomeMessage.value = '';
+    console.warn(`Prijevod za jezik "${lang}" nije pronađen.`);
   }
 };
 
 // funkcija za promjenu naslova na temelju ključa
 const updatePageTitle = (key) => {
-  currentTitleKey.value = key; // pospremi ključ naslova
-  if (translations.value[currentLang.value] && translations.value[currentLang.value][key]) {
-    pageTitle.value = translations.value[currentLang.value][key]; // dohvati naslov iz prijevoda
-    //console.log(`Naslov promijenjen: ${pageTitle.value}`);
+  currentTitleKey.value = key;
+  if (key === 'adminPanel') {
+    pageTitle.value = 'Administracijski panel';
+  } else if (translations.value[currentLang.value] && translations.value[currentLang.value][key]) {
+    pageTitle.value = translations.value[currentLang.value][key];
   } else {
+    pageTitle.value = '';
     console.warn(`Prijevod s ključem "${key}" nije pronađen u jeziku "${currentLang.value}".`);
   }
 };
@@ -84,19 +104,34 @@ const updateTime = () => {
   time.value = `${hours}:${minutes}:${seconds}`;
 };
 
-// dohvati prijevode i postavi jezik na hrvatski
+// inicijalizacija pri montiranju komponente
 onMounted(async () => {
-  await fetchLanguages(); // učitaj jezike
-  await fetchTranslations(); // učitaj prijevode
-  changeLanguage('hr'); // postavi jezik na hrvatski
-  updatePageTitle('welcome'); // inicijaliziraj naslov
+  await getLanguages();
+  await getTranslations();
+  changeLanguage('hr');
+  updatePageTitle('welcome');
   updateTime();
   setInterval(updateTime, 1000);
 });
+
+const currentView = ref(0);
+
+const setCurrentView = (view, titleKey = 'welcome') => {
+  currentView.value = view;
+  updatePageTitle(titleKey);
+};
+
+const goToMainPage = () => {
+  setCurrentView(0, 'welcome');
+};
+
 </script>
 
 <template>
   <div class="page-header">
+    <button class="home-button" @click="goToMainPage" title="Početna">
+      <span class="pi pi-home"></span>
+    </button>
     <div class="clock">{{ time }}</div>
     <div class="page-title">{{ pageTitle }}</div>
     <div class="logo">
@@ -105,13 +140,14 @@ onMounted(async () => {
   </div>
 
   <div class="background-wrapper">
-    <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle"
-      :translations="translations" />
+    <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle" :translations="translations"
+      :currentView="currentView" :setCurrentView="setCurrentView" />
   </div>
   <div class="language-buttons">
-    <button v-for="language in languages" :key="language.code" :class="{ selected: currentLang === language.code }"
-      @click="() => changeLanguage(language.code)">
-      <span :class="language.flag"></span> {{ language.name }}
+    <button v-for="language in languages" :key="language.ID"
+      :class="{ selected: currentLang === language.LanguageCode }" @click="() => changeLanguage(language.LanguageCode)"
+      :disabled="currentTitleKey === 'adminPanel'">
+      <span :class="language.Flag"></span> {{ language.Name }}
     </button>
   </div>
 </template>
@@ -123,6 +159,23 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   gap: 15%;
+}
+
+.home-button {
+  background: white;
+  border: none;
+  font-size: 2.2em;
+  cursor: pointer;
+  margin-right: 1em;
+  color: #000000;
+  display: flex;
+  align-items: center;
+  position: absolute;
+  left: 1.5em;
+}
+
+.home-button:hover {
+  color: #2c3e50;
 }
 
 .clock {
@@ -183,6 +236,13 @@ onMounted(async () => {
   z-index: 2;
   box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.2);
   border-radius: 0 0 0.2em 0.2em;
+}
+
+.language-buttons button:disabled,
+.language-buttons button.disabled {
+  opacity: 0;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 
 .background-wrapper {
