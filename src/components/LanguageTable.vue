@@ -223,8 +223,6 @@ thead th {
     z-index: 2;
     color: white;
     border-top: none;
-    /* Ensures a solid top border */
-    /* Optional for visual separation: */
     box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.15);
 }
 
