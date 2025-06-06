@@ -1,17 +1,17 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
+// import { PAS } from '@/utils/pas-util';
+// if (!PAS) {
+//     console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+// } else {
+//     // console.log('PAS instanca povezana.');
+// }
+
+// PAS - razvojna instanca na dev-inpos serveru
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
     console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
-} else {
-    // console.log('PAS instanca povezana.');
-}
-
-// oepas_dev2 - razvojna instanca na dev-inpos serveru
-import { oepas_dev2 } from '@/utils/pas-util';
-if (!oepas_dev2) {
-    console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
 } else {
     // console.log('PAS instanca povezana.');
 }
@@ -114,10 +114,10 @@ const switchTab = (tab) => {
 const fetchData = async () => {
     try {
         const [usersResponse, companiesResponse, contactsResponse] = await Promise.all([
-            oepas_dev2.get('/Visitors'),
-            oepas_dev2.get('/Companies'),
-            oepas_dev2.get('/Contacts'),
-            // oepas_dev2.get('/translations'),
+            PAS.get('/Visitors'),
+            PAS.get('/Companies'),
+            PAS.get('/Contacts'),
+            // PAS.get('/translations'),
         ]);
 
         users.value = usersResponse.data.dsVisitors.ttVisitors;
@@ -160,6 +160,7 @@ const onRowEditSave = async (event) => {
 // Fetch data when the component is mounted
 onMounted(() => {
     fetchData();
+    switchTab('Visitors'); // Set default tab to Visitors
 });
 
 const userDialog = ref(false); // Controls the visibility of the user dialog

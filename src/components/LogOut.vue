@@ -1,6 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+  console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+  // console.log('PAS instanca povezana.');
+}
 import SimpleKeyboard from './SimpleKeyboard.vue'; // Import the numerical keyboard component
 
 const loggedInUsers = ref([]); // Stores the currently logged-in users
@@ -13,8 +18,8 @@ const selectedUser = ref(null); // Stores the user selected from suggestions
 // Fetch all logged-in users
 const fetchLoggedInUsers = async () => {
   try {
-    const response = await PAS.get('/users?online=true'); // Fetch users with `online: true`
-    loggedInUsers.value = response.data;
+    const response = await PAS.get('/Visitors?filter=Online%20=%20Yes');
+    loggedInUsers.value = response.data.dsVisitors.ttVisitors;
     console.log('Logged-in users:', loggedInUsers.value);
   } catch (error) {
     console.error('Error fetching logged-in users:', error);
@@ -22,26 +27,48 @@ const fetchLoggedInUsers = async () => {
 };
 
 // Logout a user by ID
-const logoutUserById = async (userId) => {
+const logoutUserById = async (user) => {
   try {
-    await PAS.patch(`/users/${userId}`, { online: false }); // Set `online` to `false`
-    console.log(`User with ID ${userId} logged out.`);
-    fetchLoggedInUsers(); // Refresh the list of logged-in users
+    const payload = {
+      dsVisitors: {
+        ttVisitors: [
+          {
+            Active: true,
+            CompanyName: user.CompanyName,
+            ContactPerson: user.ContactPerson,
+            FullName: user.FullName,
+            GDPRAgreement: user.GDPRAgreement,
+            ID: user.ID,
+            InsertUser: user.InsertUser,
+            Inserted: user.Inserted,
+            Online: false,
+            PINCode: user.PINCode,
+            UpdateUser: 'user/logout',
+            Updated: new Date().toISOString(),
+            VisitPurpose: user.VisitPurpose
+          }
+        ]
+      }
+    };
+    await PAS.put(`/Visitors`, payload);
+    fetchLoggedInUsers();
   } catch (error) {
     console.error('Error logging out user:', error);
   }
 };
 
+let user;
 // Logout a user by PIN
 const logoutUserByPin = async () => {
   try {
-    const response = await PAS.get(`/users?pinCode=${encodeURIComponent(pinCode.value)}`);
-    const user = response.data[0]; // Get the first matching user
-    if (user && user.online) {
-      const confirmLogout = confirm(`Are you sure you want to log out ${user.fullName}?`);
+    const response = await PAS.get(`/Visitors?filter=PINCode%20=%20${pinCode.value}`);
+    user = response.data.dsVisitors.ttVisitors[0];
+    user.Online = true;
+    if (user && user.Online) {
+      const confirmLogout = confirm(`Are you sure you want to log out ${user.FullName}?`);
       if (confirmLogout) {
-        await logoutUserById(user.id);
-        pinCode.value = ''; // Clear the PIN input
+        await logoutUserById(user);
+        pinCode.value = '';
       }
     } else {
       alert('No matching online user found for the entered PIN.');
@@ -54,16 +81,18 @@ const logoutUserByPin = async () => {
 // Handle full name input and show suggestions
 const handleNameInput = () => {
   suggestedUsers.value = loggedInUsers.value.filter((user) =>
-    user.fullName.toLowerCase().includes(fullName.value.toLowerCase())
+    user.FullName.toLowerCase().includes(fullName.value.toLowerCase())
   );
 };
 
 // Handle suggestion click
 const selectUser = (user) => {
   selectedUser.value = user;
-  const confirmLogout = confirm(`Are you sure you want to log out ${user.fullName}?`);
+  console.log(`Selected user: ${user}`);
+  const confirmLogout = confirm(`Are you sure you want to log out ${user.FullName}?`);
   if (confirmLogout) {
-    logoutUserById(user.id);
+    console.log(user)
+    logoutUserById(user);
     fullName.value = ''; // Clear the full name input
     suggestedUsers.value = []; // Clear suggestions
   }
@@ -108,9 +137,9 @@ onMounted(() => {
       <SimpleKeyboard :input="fullName" :lang="'qwerty'" @onChange="onChange" />
       <div class="suggestions">
         <p v-if="suggestedUsers.length === 0">No suggestions available.</p>
-        <div v-for="user in suggestedUsers" :key="user.id" class="suggestion-card" @click="selectUser(user)">
-          <p>{{ user.fullName }}</p>
-          <p>{{ user.companyName }}</p>
+        <div v-for="user in suggestedUsers" :key="user.ID" class="suggestion-card" @click="selectUser(user)">
+          <p>{{ user.FullName }}</p>
+          <p>{{ user.CompanyName }}</p>
         </div>
       </div>
     </div>
@@ -159,6 +188,7 @@ onMounted(() => {
   border-radius: 5px;
   cursor: pointer;
   background-color: #f8f9fa;
+  color: black;
   transition: background-color 0.2s ease;
 }
 
@@ -206,6 +236,8 @@ onMounted(() => {
 .suggestion-card p {
   color: #2c3e50;
 }
+
+
 
 /* ::v-deep(.hg-button:hover) {
   background-color: #2c3e50;

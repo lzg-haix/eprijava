@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 
 // import { oepas_dev2 } from '@/utils/pas-util';
 
@@ -19,7 +19,6 @@ const props = defineProps({
 
 onMounted(() => {
     getItemFields(props.currentlyDisplaying);
-    // console.log('Item fields:', itemFields.value);
 });
 
 // polja za prikazati
@@ -31,6 +30,7 @@ function getItemFields(currentItem) {
                 { header: 'ID', field: 'ID' },
                 { header: 'Ime i prezime', field: 'FullName' },
                 { header: 'Tvrtka', field: 'CompanyName' },
+                { header: 'Aktivan', field: 'Active' },
                 { header: 'Svrha posjeta', field: 'VisitPurpose' },
                 { header: 'Kontakt', field: 'ContactPerson' },
                 { header: 'GDPR', field: 'GDPRAgreement' },
@@ -61,7 +61,15 @@ function getItemFields(currentItem) {
         case 'LanguagesEntries':
             return [
                 { header: 'Slog', field: 'EntryName' },
-                { header: 'Vrijednost', field: 'LangValue' }
+                { header: 'Vrijednost', field: 'LangValue' },
+                { header: 'Opis', field: 'EntryDescription' }
+            ];
+        case 'Languages':
+            return [
+                { header: 'ID', field: 'ID' },
+                { header: 'Naziv', field: 'Name' },
+                { header: 'Kod', field: 'LanguageCode' },
+                { header: 'Zastava', field: 'Flag' }
             ];
         default:
             console.warn('Unknown currentlyDisplaying value:', currentItem);
@@ -98,12 +106,75 @@ const localItem = ref({ ...props.itemToEdit });
 
 // spremanje izmjena
 const saveItem = () => {
+    let wrappedItem;
+    switch (props.currentlyDisplaying) {
+        case 'Visitors':
+            wrappedItem = { dsVisitors: { ttVisitors: [localItem.value] } };
+            break;
+        case 'Companies':
+            wrappedItem = { dsCompanies: { ttCompanies: [localItem.value] } };
+            break;
+        case 'Contacts':
+            wrappedItem = { dsContacts: { ttContacts: [localItem.value] } };
+            break;
+        case 'VisitPurposes':
+            break;
+        case 'LanguagesEntries':
+            wrappedItem = { dsLanguagesEntries: { ttLanguagesEntries: [localItem.value] } };
+            break;
+        case 'Languages':
+            break;
+        default:
+            console.warn('Unknown currentlyDisplaying value:', props.currentlyDisplaying);
+            wrappedItem = { ...localItem.value };
+    }
     if (props.newOrEdit === 'new') {
-        emit('newItemCreated', { ...localItem.value });
+        emit('newItemCreated', wrappedItem);
     } else {
-        emit('updateItem', { ...localItem.value });
+        console.log('Updating item:', localItem.value);
+        emit('updateItem', wrappedItem);
     }
 };
+
+// Helper to resize EntryDescription textarea if present
+async function resizeEntryDescription() {
+    await nextTick();
+    const textarea = document.getElementById('EntryDescription');
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+}
+
+async function resizeLangValue() {
+    await nextTick();
+    const textarea = document.getElementById('LangValue');
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+}
+
+watch(
+    [() => props.newOrEdit, () => props.itemToEdit],
+    () => {
+        resizeEntryDescription();
+        resizeLangValue();
+    },
+    { immediate: true }
+);
+
+// Also watch for EntryDescription changes (typing)
+watch(
+    () => localItem.value.EntryDescription,
+    resizeEntryDescription
+);
+
+// Also watch for LangValue changes (typing)
+watch(
+    () => localItem.value.LangValue,
+    resizeLangValue
+);
 
 </script>
 
@@ -118,12 +189,19 @@ const saveItem = () => {
                     <div v-for="field in itemFields.filter(f => f.field !== 'ID')" :key="field.field"
                         class="form-group">
                         <label :for="field.field">{{ field.header }}: </label>
-                        <div v-if="field.field === 'online' || field.field === 'gdprAgreement'">
+                        <div
+                            v-if="field.field === 'Online' || field.field === 'GDPRAgreement' || field.field === 'Active' || field.field === 'Online'">
                             <input :id="field.field" v-model="localItem[field.field]" type="checkbox"
                                 :checked="!!itemToEdit[field.field]" />
                         </div>
+                        <div v-else-if="field.field === 'EntryDescription'">
+                            <textarea :id="field.field" v-model="localItem[field.field]" @input="autoResize($event)"
+                                rows="1"
+                                style="resize: none; overflow: hidden; width: 20em; border-radius: 0.5em; text-align: left;"></textarea>
+                        </div>
                         <div v-else>
-                            <input :id="field.field" v-model="localItem[field.field]" type="text" required />
+                            <input :id="field.field" v-model="localItem[field.field]" type="text" required
+                                :readonly="field.field === 'EntryName'" />
                         </div>
                     </div>
                 </div>
@@ -134,12 +212,19 @@ const saveItem = () => {
                     <div v-for="field in itemFields.filter(f => f.field !== 'ID')" :key="field.field"
                         class="form-group">
                         <label :for="field.field">{{ field.header }}: </label>
-                        <div v-if="field.field === 'Online' || field.field === 'GDPRAgreement'">
+                        <div
+                            v-if="field.field === 'Online' || field.field === 'GDPRAgreement' || field.field === 'Active' || field.field === 'Online'">
                             <input :id="field.field" v-model="localItem[field.field]" type="checkbox"
                                 :checked="!!itemToEdit[field.field]" />
                         </div>
+                        <div v-else-if="field.field === 'EntryDescription' | field.field === 'LangValue'">
+                            <textarea class="description" :id="field.field" v-model="localItem[field.field]"
+                                @input="autoResize($event)" rows="1"
+                                style="resize: none; overflow: hidden; width: 20em; border-radius: 0.5em; text-align: left;"></textarea>
+                        </div>
                         <div v-else>
-                            <input :id="field.field" v-model="localItem[field.field]" type="text" required />
+                            <input :id="field.field" v-model="localItem[field.field]" type="text" required
+                                :readonly="field.field === 'EntryName'" />
                         </div>
                     </div>
                 </div>
@@ -184,6 +269,17 @@ input {
     width: 20em;
     text-align: center;
     border-radius: 0.5em;
+    border: 1px solid black;
+}
+
+.description {
+    width: 20em;
+    text-align: left;
+    border: 1px solid black;
+    border-radius: 0.5em;
+    overflow: hidden;
+    color: black;
+    font-family: Arial, sans-serif;
 }
 
 .dialog-actions {
@@ -193,28 +289,32 @@ input {
 }
 
 .confirm-button {
-    background-color: #d9534f;
-    color: white;
-    border: none;
-    padding: 1em 2em;
+    background-color: #09ff00;
+    color: black;
+    border: 1px solid #000;
     border-radius: 4px;
     cursor: pointer;
+    text-align: center;
+    width: 5em;
+    height: 3em;
 }
 
 .cancel-button {
-    background-color: #5bc0de;
-    color: white;
-    border: none;
-    padding: 1em 2em;
+    background-color: #fbff00;
+    color: black;
+    border: 1px solid #000;
     border-radius: 4px;
     cursor: pointer;
+    text-align: center;
+    width: 5em;
+    height: 3em;
 }
 
 .confirm-button:hover {
-    background-color: #c9302c;
+    background-color: #67e663;
 }
 
 .cancel-button:hover {
-    background-color: #31b0d5;
+    background-color: #dee05e;
 }
 </style>

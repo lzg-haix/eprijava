@@ -3,18 +3,9 @@ import { ref, onMounted, watch } from 'vue';
 import MainPage from './components/MainPage.vue';
 import 'flag-icons/css/flag-icons.min.css';
 
-// json-server
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
   console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
-} else {
-  // console.log('PAS instanca povezana.');
-}
-
-// oepas_dev2 - razvojna instanca na dev-inpos serveru
-import { oepas_dev2 } from '@/utils/pas-util';
-if (!oepas_dev2) {
-  console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
 } else {
   // console.log('PAS instanca povezana.');
 }
@@ -24,31 +15,41 @@ if (!window.location.origin) {
   window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
 }
 
-let time = ref(''); // trenutno vrijeme
-let welcomeMessage = ref(''); // poruka dobrodošlice
-let currentLang = ref('hr'); // defaultni jezik je hrvatski
-let pageTitle = ref(''); // naslov stranice
-let currentTitleKey = ref('welcome'); // defaultni ključ naslova
+let time = ref('');
+let welcomeMessage = ref('');
+let currentLang = ref('hr');
+let pageTitle = ref('');
+let currentTitleKey = ref('welcome');
 
-// dohvaćanje jezika
-let languages = ref([]); // jezici
-let translations = ref({}); // prijevodi
+
+let languages = ref([]);
+let translations = ref({});
+
+const onlineUsers = ref([]);
+const getOnlineUsers = async () => {
+  try {
+    const response = await PAS.get('/Visitors?filter=Online%20=%20yes');
+    onlineUsers.value = response.data.dsVisitors.ttVisitors;
+  } catch (error) {
+    console.error('Došlo je do greške kod dohvaćanja online korisnika:', error);
+  }
+};
+const excelFields = { Ime: 'FullName', Tvrtka: 'CompanyName', "Svrha posjete": 'VisitPurpose', Kontakt: 'ContactPerson' };
 
 const getLanguages = async () => {
   try {
-    const response = await oepas_dev2.get('/Languages?filter=Active%20=%20yes');
+    const response = await PAS.get('/Languages?filter=Active%20=%20yes');
     languages.value = response.data.dsLanguages.ttLanguages
-      .filter((language) => language.Active) // uključi samo aktivne jezike
-      .sort((a, b) => a.order - b.order); // sortiraj prema redoslijedu
+      .filter((language) => language.Active)
+      .sort((a, b) => a.order - b.order);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja jezika:', error);
   }
 };
 
-// dohvaćanje prijevoda preko API-ja
 const getTranslations = async () => {
   try {
-    const response = await oepas_dev2.get('/LanguagesEntries');
+    const response = await PAS.get('/LanguagesEntries');
     const entries = response.data.dsLanguagesEntries.ttLanguagesEntries;
     const langMap = {};
 
@@ -60,13 +61,11 @@ const getTranslations = async () => {
       langMap[code][entry.EntryName] = entry.LangValue;
     });
     translations.value = langMap;
-    // console.log('Prijevodi:', translations.value);
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja prijevoda:', error);
   }
 };
 
-// promjena jezika
 const changeLanguage = (lang) => {
   currentLang.value = lang;
   if (translations.value[lang] && translations.value[lang].welcome) {
@@ -77,7 +76,6 @@ const changeLanguage = (lang) => {
   }
 };
 
-// funkcija za promjenu naslova na temelju ključa
 const updatePageTitle = (key) => {
   currentTitleKey.value = key;
   if (key === 'adminPanel') {
@@ -90,12 +88,10 @@ const updatePageTitle = (key) => {
   }
 };
 
-// prati promjenu jezika i ponovno postavi naslov
 watch(currentLang, () => {
   updatePageTitle(currentTitleKey.value);
 });
 
-// funkcija za ažuriranje vremena
 const updateTime = () => {
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
@@ -104,7 +100,6 @@ const updateTime = () => {
   time.value = `${hours}:${minutes}:${seconds}`;
 };
 
-// inicijalizacija pri montiranju komponente
 onMounted(async () => {
   await getLanguages();
   await getTranslations();
@@ -112,6 +107,7 @@ onMounted(async () => {
   updatePageTitle('welcome');
   updateTime();
   setInterval(updateTime, 1000);
+  scheduleMidnightReset();
 });
 
 const currentView = ref(0);
@@ -119,6 +115,40 @@ const currentView = ref(0);
 const setCurrentView = (view, titleKey = 'welcome') => {
   currentView.value = view;
   updatePageTitle(titleKey);
+};
+
+const setAllOnlineUsersOffline = async () => {
+  try {
+    const response = await PAS.get('/Visitors?filter=Online=true');
+    const onlineUsers = response.data.dsVisitors.ttVisitors;
+    if (!onlineUsers || onlineUsers.length === 0) return;
+
+    const payload = {
+      dsVisitors: {
+        ttVisitors: onlineUsers.map(user => ({
+          ...user,
+          Online: false,
+          UpdateUser: 'system/midnight',
+          Updated: new Date().toISOString(),
+        }))
+      }
+    };
+
+    await PAS.put('/Visitors', payload);
+    console.log('All online users set to offline at midnight.');
+    getOnlineUsers();
+  } catch (error) {
+    console.error('Error setting online users to offline at midnight:', error);
+  }
+};
+
+const scheduleMidnightReset = () => {
+  setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 0 && now.getMinutes() === 0) {
+      setAllOnlineUsersOffline();
+    }
+  }, 60 * 1000);
 };
 
 const goToMainPage = () => {
@@ -129,8 +159,11 @@ const goToMainPage = () => {
 
 <template>
   <div class="page-header">
-    <button class="home-button" @click="goToMainPage" title="Početna">
-      <span class="pi pi-home"></span>
+    <button class="home-button" title="Početna">
+      <download-excel @click="getOnlineUsers" class="pi pi-print" :data="onlineUsers" name="evakuacija"
+        :fields="excelFields">.
+      </download-excel>
+      <span class="pi pi-home" @click="goToMainPage"></span>
     </button>
     <div class="clock">{{ time }}</div>
     <div class="page-title">{{ pageTitle }}</div>

@@ -1,12 +1,12 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import DeleteDialog from './DeleteDialog.vue';
 import InfoDialog from './InfoDialog.vue';
 
-// oepas_dev2 - razvojna instanca na dev-inpos serveru
-import { oepas_dev2 } from '@/utils/pas-util';
-if (!oepas_dev2) {
-    console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+// PAS - razvojna instanca na dev-inpos serveru
+import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+    console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
 } else {
     // console.log('PAS instanca povezana.');
 }
@@ -14,7 +14,7 @@ if (!oepas_dev2) {
 const languages = ref([]);
 const getLanguages = async () => {
     try {
-        const response = await oepas_dev2.get('/Languages?filter=Active%20=%20yes');
+        const response = await PAS.get('/Languages?filter=Active%20=%20yes');
         languages.value = response.data.dsLanguages.ttLanguages
             .sort((a, b) => a.order - b.order);
     } catch (error) {
@@ -27,7 +27,7 @@ const languageEntries = ref([]);
 const getLanguagesEntries = async () => {
     if (!selectedLanguageId.value) return;
     try {
-        const response = await oepas_dev2.get(`/LanguagesEntries?filter=LanguageID=${selectedLanguageId.value}`);
+        const response = await PAS.get(`/LanguagesEntries?filter=LanguageID=${selectedLanguageId.value}`);
         languageEntries.value = response.data.dsLanguagesEntries.ttLanguagesEntries || [];
     } catch (error) {
         console.error('Greška kod dohvaćanja prijevoda:', error);
@@ -53,9 +53,9 @@ const showInfoDialog = ref(false);
 const showDeleteDialog = ref(false);
 const itemToEdit = ref({});
 const passedItem = ref(null);
-
 const editRow = (entry) => {
     itemToEdit.value = { ...entry };
+    newOrEdit.value = 'edit';
     showInfoDialog.value = true;
 };
 const handleUpdateItem = async (updatedItem) => {
@@ -64,41 +64,39 @@ const handleUpdateItem = async (updatedItem) => {
             ttLanguagesEntries: [
                 {
                     ...updatedItem,
-                    // LanguageID: selectedLanguageId.value
                 }
             ]
         }
     };
     try {
-        await oepas_dev2.put(`/LanguagesEntries`, payload);
+        await PAS.put(`/LanguagesEntries`, updatedItem);
         await getLanguagesEntries();
     } catch (error) {
         console.error('Greška kod ažuriranja prijevoda:', error);
     }
     showInfoDialog.value = false;
+    itemToEdit.value = {};
 };
 
-const confirmDelete = (entry) => {
-    passedItem.value = entry;
-    showDeleteDialog.value = true;
-};
-const deleteRow = async () => {
-    const payload = {
-        dsLanguagesEntries: {
-            ttLanguagesEntries: [
-                {
-                    ID: passedItem.value.ID
-                }
-            ]
-        }
-    };
-    try {
-        await oepas_dev2.delete(`/LanguagesEntries/${passedItem.value.ID}`, { data: payload });
-        await getLanguagesEntries();
-    } catch (error) {
-        console.error('Greška kod brisanja prijevoda:', error);
-    }
-    showDeleteDialog.value = false;
+const searchQuery = ref('');
+
+const filteredEntries = computed(() => {
+    if (!languageEntries.value) return [];
+    let entries = languageEntries.value.filter(entry => entry.EntryName !== 'visitPurposes');
+    if (!searchQuery.value) return entries;
+    const q = searchQuery.value.toLowerCase();
+    return entries.filter(
+        entry =>
+            (entry.EntryName && entry.EntryName.toLowerCase().includes(q)) ||
+            (entry.LangValue && entry.LangValue.toLowerCase().includes(q))
+    );
+});
+
+const newOrEdit = ref(''); // 'new' ili 'edit'
+
+const addRow = async () => {
+    newOrEdit.value = 'new';
+    showInfoDialog.value = true; // Open the dialog
 };
 
 </script>
@@ -106,37 +104,38 @@ const deleteRow = async () => {
 <template>
     <div class="wrapper">
 
-        <div class="language-selector">
-            <button v-for="lang in languages" :key="lang.ID" :class="{ selected: selectedLanguageId === lang.ID }"
-                @click="selectedLanguageId = lang.ID">
-                <span :class="lang.Flag"></span> {{ lang.Name }}
-            </button>
-        </div>
-
         <div class="toolbar">
-            <div class="add-user">
-                <i class="pi pi-plus" @click="addRow"></i>
-            </div>
             <input type="text" id="search-bar" placeholder="Pretraži..." v-model="searchQuery" />
+            <div class="language-options">
+                <div class="language-selector">
+                    <button v-for="lang in languages" :key="lang.ID"
+                        :class="{ selected: selectedLanguageId === lang.ID }" @click="selectedLanguageId = lang.ID">
+                        <span :class="lang.Flag"></span> {{ lang.Name }}
+                    </button>
+                </div>
+                <!-- <div class="add-user">
+                    <i class="pi pi-plus" @click="addRow"></i>
+                </div> -->
+            </div>
         </div>
 
-        <!-- Translations Table -->
         <div class="table-scroll">
             <table>
                 <thead>
                     <tr>
                         <th class="fixed-col">Slog</th>
+                        <th>Opis</th>
                         <th>Vrijednost</th>
                         <th id="opcije">Opcije</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="entry in languageEntries" :key="entry.ID">
+                    <tr v-for="entry in filteredEntries" :key="entry.ID">
                         <td class="fixed-col">{{ entry.EntryName }}</td>
+                        <td style="width: 30em; word-break: break-all;">{{ entry.EntryDescription }}</td>
                         <td>{{ entry.LangValue }}</td>
                         <td class="td-button-cell">
                             <i class="pi pi-pencil" @click="editRow(entry)"></i>
-                            <!-- <i class="pi pi-trash" @click="confirmDelete(entry)"></i> -->
                         </td>
                     </tr>
                 </tbody>
@@ -144,8 +143,8 @@ const deleteRow = async () => {
         </div>
 
         <!-- dijalog za dodavanje/izmjenu zapisa -->
-        <InfoDialog v-if="showInfoDialog" :newOrEdit="'edit'" :itemToEdit="itemToEdit" @newItemCreated="handleNewItem"
-            @updateItem="handleUpdateItem" :currentlyDisplaying="'LanguagesEntries'"
+        <InfoDialog v-if="showInfoDialog" :newOrEdit="newOrEdit" :itemToEdit="itemToEdit"
+            @newItemCreated="handleNewItem" @updateItem="handleUpdateItem" :currentlyDisplaying="'LanguagesEntries'"
             @hideInfoDialog="showInfoDialog = false" />
 
         <!-- dijalog za brisanje zapisa -->
@@ -161,9 +160,18 @@ const deleteRow = async () => {
     width: 100%;
 }
 
+.language-options {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
 .language-selector {
     display: flex;
-    gap: 0.5em;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
     margin-bottom: 1em;
 }
 
@@ -182,21 +190,22 @@ const deleteRow = async () => {
     color: #fff;
 }
 
-.language-selector span {
-    margin-right: 0.5em;
-}
-
 .toolbar {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     justify-content: space-between;
     margin-bottom: 1em;
 }
 
+#search-bar {
+    height: 2em;
+}
+
 .pi-plus {
     cursor: pointer;
-    margin-right: 3.33em;
+    margin-right: 2.5em;
     color: limegreen;
+    margin-bottom: 1.2em;
 }
 
 .pi-pencil {
@@ -235,7 +244,7 @@ td {
 
 #opcije {
     text-align: center;
-    width: 7.5em;
+    width: 3em;
 }
 
 th {
@@ -257,7 +266,7 @@ tbody tr:hover {
 }
 
 .table-scroll {
-    max-height: 65vh;
+    max-height: 66vh;
     overflow-y: auto;
     width: 100%;
     box-sizing: border-box;

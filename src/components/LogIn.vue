@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import SimpleKeyboard from './SimpleKeyboard.vue' // import virtualne tipkovnice - vanjski library
+import SimpleKeyboard from './SimpleKeyboard.vue'
 import SignUp from './SignUp.vue';
 
 import { PAS } from '@/utils/pas-util';
@@ -10,15 +10,12 @@ if (!PAS) {
   // console.log('PAS instanca povezana.');
 }
 
-let allUsers = ref([]) // svi korisnici
+let allUsers = ref([])
 
-
-// dohvaćanje svih korisnika preko API-ja
-const fetchAllUsers = async () => {
+const fetchOfflineUsers = async () => {
   try {
-    const response = await PAS.get('/users'); // Dohvati sve korisnike iz db.json
-    allUsers.value = response.data; // Spremi sve korisnike
-    console.log('Svi korisnici uspješno dohvaćeni:', allUsers.value);
+    const response = await PAS.get('/Visitors?filter=Online%20=%20No');
+    allUsers.value = response.data;
   } catch (error) {
     console.error('Došlo je do greške kod dohvaćanja svih korisnika:', error);
   }
@@ -29,22 +26,22 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  offlineUsers: { // svi korisnici
+  offlineUsers: {
     type: Array,
     required: true,
   },
-  translations: { // prijevodi
+  translations: {
     type: Object,
     required: true,
   },
-  goToMainPage: { // funkcija za povratak na glavnu stranicu, pozvana nakon pri završetku registracije
+  goToMainPage: {
     type: Function,
     required: true,
   },
 });
 
 const step = ref(1);
-const pinCode = ref(''); // Stores the entered PIN code
+const pinCode = ref('');
 
 const nextStep = () => {
   if (step.value < 4) {
@@ -54,29 +51,21 @@ const nextStep = () => {
   }
 };
 
-const loggedInUser = ref(null); // Stores the logged-in user's details
+const loggedInUser = ref(null);
 
-// login
 const handleLogIn = async () => {
   try {
-    // Send a GET request to the backend to find a user with the entered PIN
-    const response = await PAS.get(`/users?pinCode=${encodeURIComponent(pinCode.value)}`);
-    const user = response.data[0]; // JSON Server returns an array, so get the first match
-
+    const response = await PAS.get(`/Visitors?filter=PINCode%20=%20${pinCode.value}`);
+    const user = response.data.dsVisitors.ttVisitors[0];
     if (user) {
-      // Check if the user is already online
-      if (user.online) {
-        alert(`${user.fullName} is already logged in!`); // Display a notification
-        step.value = 1; // Reset to the PIN entry step
-        return; // Stop further processing
+      if (user.Online) {
+        alert(`${user.fullName} is already logged in!`);
+        step.value = 1;
+        return;
       }
-
-      // User found and not online, proceed with login
-      console.log('User logged in:', user);
-      loggedInUser.value = user; // Store the logged-in user's details
-      step.value = 2; // Move to the welcome message step
+      loggedInUser.value = user;
+      step.value = 2;
     } else {
-      // User not found, show error message
       console.error('Invalid PIN code');
     }
   } catch (error) {
@@ -86,31 +75,35 @@ const handleLogIn = async () => {
 
 const confirmDetails = async () => {
   try {
-    // Check if the logged-in user exists
     if (!loggedInUser.value) {
       console.error('No logged-in user found.');
       return;
     }
 
-    // Prepare the updated user data
-    const updatedUser = {
-      online: true, // Set the user as online
+    loggedInUser.value.Online = true;
+    const payload = {
+      dsVisitors: {
+        ttVisitors: [
+          {
+            ID: loggedInUser.value.ID,
+            Online: true,
+            VisitPurpose: loggedInUser.value.VisitPurpose || '',
+            ContactPerson: loggedInUser.value.ContactPerson || '',
+            PINCode: loggedInUser.value.PINCode || '',
+            FullName: loggedInUser.value.FullName || '',
+            CompanyName: loggedInUser.value.CompanyName || '',
+            GDPRAgreement: loggedInUser.value.GDPRAgreement || false,
+            Active: loggedInUser.value.Active || true,
+            Inserted: loggedInUser.value.Inserted,
+            Updated: new Date().toISOString(),
+            UpdateUser: 'user/login',
+            InsertUser: loggedInUser.value.InsertUser || '',
+          }
+        ]
+      },
     };
 
-    // Check if the visit purpose and contact person are the same
-    if (
-      loggedInUser.value.visitPurpose === loggedInUser.value.previousVisitPurpose &&
-      loggedInUser.value.contactPerson === loggedInUser.value.previousContactPerson
-    ) {
-      console.log('Visit purpose and contact person are the same as last time. Only updating online status.');
-    } else {
-      // If they are different, update them as well
-      updatedUser.visitPurpose = loggedInUser.value.visitPurpose;
-      updatedUser.contactPerson = loggedInUser.value.contactPerson;
-    }
-
-    // Send a PATCH request to update the user in the database
-    const response = await PAS.patch(`/users/${loggedInUser.value.id}`, updatedUser);
+    const response = await PAS.put(`/Visitors`, payload);
 
     if (response && response.data) {
       console.log('User updated successfully:', response.data);
@@ -118,29 +111,26 @@ const confirmDetails = async () => {
       console.error('Unexpected response format:', response);
     }
 
-    // Navigate back to the main page
     props.goToMainPage();
   } catch (error) {
     console.error('Error updating user:', error.response?.data || error.message);
   }
 };
 
-const skipStepTwo = ref(false); // Flag to skip the GDPR step
+const skipStepTwo = ref(false);
 
 const updateDetails = () => {
-  // If the user wants to update their details, move to the SignUp component
-  step.value = 3; // Move to the SignUp step
-  skipStepTwo.value = true; // Skip the GDPR step since the user already agreed to it
+  step.value = 3;
+  skipStepTwo.value = true;
 };
 
-// Function to handle input changes from the virtual keyboard
 const onChange = (inputValue) => {
-  pinCode.value = inputValue; // Bind the virtual keyboard input to the PIN code
+  pinCode.value = inputValue;
 };
 
 onMounted(async () => {
   console.log('Offline korisnici:', props.offlineUsers);
-  await fetchAllUsers(); // Fetch all users when the component is mounted
+  await fetchOfflineUsers();
 });
 
 
@@ -151,7 +141,7 @@ onMounted(async () => {
     <!-- Step 1: Enter PIN -->
     <div id="pin-group" v-if="step === 1">
       <p id="pin-input">{{ translations[lang].enterPin }}</p>
-      <input type="text" id="pinCode" v-model="pinCode" readonly maxlength="4"
+      <input type="text" id="pinCode" v-model="pinCode" readonly maxlength="6"
         :placeholder="translations[lang].placeholderPin" />
       <SimpleKeyboard :input="pinCode" :lang="'num'" @onChange="onChange" />
       <button id="njekst" @click="() => { handleLogIn(); nextStep(); }">{{ translations[lang].next }}</button>
@@ -162,13 +152,13 @@ onMounted(async () => {
 
     <!-- Step 2: Welcome Message -->
     <div v-else-if="step === 2">
-      <p>{{ translations[lang].welcomeBack }}, {{ loggedInUser?.fullName }}!</p>
+      <p>{{ translations[lang].welcomeBack }}, {{ loggedInUser?.FullName }}!</p>
       <p>
-        <strong>{{ translations[lang].visitPurpose }}:</strong> {{ loggedInUser?.visitPurpose ||
+        <strong>{{ translations[lang].visitPurpose }}:</strong> {{ loggedInUser?.VisitPurpose ||
           translations[lang].notProvided }}
       </p>
       <p>
-        <strong>{{ translations[lang].contactPerson }}:</strong> {{ loggedInUser?.contactPerson ||
+        <strong>{{ translations[lang].contactPerson }}:</strong> {{ loggedInUser?.ContactPerson ||
           translations[lang].notProvided }}
       </p>
       <p>{{ translations[lang].confirmDetails }}</p>
@@ -251,12 +241,10 @@ onMounted(async () => {
 
   50% {
     text-indent: 5em;
-    /* Move placeholder to the right */
   }
 
   100% {
     text-indent: 0;
-    /* Move placeholder back to the left */
   }
 }
 
@@ -267,12 +255,10 @@ onMounted(async () => {
   border: 2px solid #2c3e50;
   border-radius: 5px;
   margin-bottom: 2rem;
-  /* Apply the animation to the input field */
 }
 
 #pinCode::placeholder {
   color: #aaa;
-  /* Optional: Customize placeholder color */
 }
 
 #njekst {
@@ -286,20 +272,14 @@ onMounted(async () => {
 
 ::v-deep(.hg-button[data-skbtn="0"]) {
   flex: 2;
-  /* Make the "0" key twice as wide as other keys */
   text-align: center;
-  /* Center the text inside the key */
   padding: 2.5rem 3.5rem;
-  /* Adjust padding for better appearance */
 }
 
 ::v-deep(.hg-button[data-skbtn="{bksp}"]) {
   flex: 2;
-  /* Make the "0" key twice as wide as other keys */
   text-align: center;
-  /* Center the text inside the key */
   padding: 2.5rem 0.3rem;
-  /* Adjust padding for better appearance */
 }
 
 #forgot-password {

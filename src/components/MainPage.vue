@@ -12,47 +12,35 @@ if (!PAS) {
   // console.log('PAS instanca povezana.');
 }
 
-// oepas_dev2 - razvojna instanca na dev-inpos serveru
-import { oepas_dev2 } from '@/utils/pas-util';
-if (!oepas_dev2) {
-  console.error('oepas_dev2 instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
-} else {
-  // console.log('PAS instanca povezana.');
-}
-
 const props = defineProps({
-  msg: String, // poruka dobrodošlice
-  lang: String, // trenutni jezik
-  updatePageTitle: Function, // funkcija za ažuriranje naslova stranice
-  translations: Object, // prijevodi proslijeđeni iz App.vue
-  currentView: Number, // trenutni prikaz (0 - dobrodošlica, 1 - registracija, 2 - prijava, 3 - odjava, 4 - admin panel)
-  setCurrentView: Function // funkcija za postavljanje trenutnog prikaza
+  msg: String,
+  lang: String,
+  updatePageTitle: Function,
+  translations: Object,
+  currentView: Number,
+  setCurrentView: Function
 })
 
-// dohvaćanje svih korisnika preko API-ja
 let allUsers = ref([])
 const getAllUsers = async () => {
   try {
-    const response = await oepas_dev2.get('/Visitors');
+    const response = await PAS.get('/Visitors');
     allUsers.value = response.data.dsVisitors.ttVisitors;
   } catch (error) {
-    console.error('*** oepas_dev2: Došlo je do greške kod dohvaćanja svih korisnika:', error);
+    console.error('*** PAS: Došlo je do greške kod dohvaćanja svih korisnika:', error);
   }
 };
 
-// filtriranje online korisnika
 let onlineUsers = ref([])
 const filterOnlineUsers = async () => {
   try {
-    // filtriraj online korisnike iz već dohvaćenih korisnika
     onlineUsers.value = allUsers.value.filter(user => user.Online);
   } catch (error) {
     console.error('Došlo je do greške kod filtriranja online korisnika:', error);
   }
 };
 
-// filtriranje offline korisnika
-let offlineUsers = ref([]) // offline korisnici, proslijeđuju se na registraciju i prijavu
+let offlineUsers = ref([])
 const filterOfflineUsers = async () => {
   try {
     offlineUsers.value = allUsers.value.filter(user => !user.Online);
@@ -61,7 +49,6 @@ const filterOfflineUsers = async () => {
   }
 };
 
-// konsolidirani poziv za metode za dohvaćanje i filtriranje korisnika
 const getUsers = async () => {
   try {
     await getAllUsers();
@@ -72,17 +59,17 @@ const getUsers = async () => {
   }
 }
 
-//const currentView = ref(0); // trenutni prikaz (0 - dobrodošlica, 1 - registracija, 2 - prijava, 3 - odjava, 4 - admin panel)
-
-// prikaži određeni prikaz i ažuriraj naslov stranice
 const showView = (view, titleKey) => {
-  props.setCurrentView(view, titleKey); // postavi trenutni prikaz
-  props.updatePageTitle(titleKey); // proslijedi ključ za prijevod naslova
+  props.setCurrentView(view, titleKey);
+  props.updatePageTitle(titleKey);
 };
 
 onMounted(async () => {
   await getUsers();
+  showView(0, 'welcome');
 });
+
+
 
 </script>
 
@@ -151,11 +138,4 @@ h3 {
 .simple-keyboard {
   max-width: 850px;
 }
-
-/* .blue {
-  position: absolute;
-  color: #2c3e50;
-  left: 50%;
-  transform: translateX(-50%);
-} */
 </style>
