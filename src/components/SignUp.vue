@@ -345,6 +345,34 @@ const nextStep = async () => {
       finalizeLogIn();
     }
   } else {
+    // For company step
+    if (step.value === 2) {
+      const companyExists = companies.value.some(
+        c => c.Name.toLowerCase() === companyName.value.toLowerCase()
+      );
+
+      if (!companyExists && companyName.value) {
+        const newCompany = await createNewCompany(companyName.value);
+        if (newCompany) {
+          selectedCompany.value = newCompany.ID;
+        }
+      }
+    }
+
+    // For contact person step
+    if (step.value === 4) {
+      const contactExists = ccontacts.value.some(
+        c => c.FullName.toLowerCase() === contactPerson.value.toLowerCase()
+      );
+
+      if (!contactExists && contactPerson.value) {
+        const newContact = await createNewContact(contactPerson.value);
+        if (newContact) {
+          selectedContactPerson.value = newContact;
+        }
+      }
+    }
+
     if (step.value === 5) {
       await handleSignUp();
       if (newVisitorData.value) {
@@ -473,6 +501,66 @@ onMounted(async () => {
   }
 });
 
+// Add these after your other functions
+const createNewCompany = async (companyName) => {
+  try {
+    const newCompany = {
+      dsCompanies: {
+        ttCompanies: [
+          {
+            Name: companyName,
+            Active: true,
+            InsertUser: 'user/signup',
+            UpdateUser: 'user/signup',
+            Inserted: new Date().toISOString(),
+            Updated: new Date().toISOString()
+          }
+        ]
+      }
+    };
+
+    const response = await PAS.post('/Companies', newCompany);
+    if (response && response.data) {
+      const createdCompany = response.data.dsCompanies.ttCompanies[0];
+      companies.value.push(createdCompany);
+      return createdCompany;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error creating new company:', error);
+    return null;
+  }
+};
+
+const createNewContact = async (fullName) => {
+  try {
+    const newContact = {
+      dsContacts: {
+        ttContacts: [
+          {
+            FullName: fullName,
+            Active: true,
+            InsertUser: 'user/signup',
+            UpdateUser: 'user/signup',
+            Inserted: new Date().toISOString(),
+            Updated: new Date().toISOString()
+          }
+        ]
+      }
+    };
+
+    const response = await PAS.post('/Contacts', newContact);
+    if (response && response.data) {
+      const createdContact = response.data.dsContacts.ttContacts[0];
+      ccontacts.value.push(createdContact);
+      return createdContact;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error creating new contact:', error);
+    return null;
+  }
+};
 </script>
 
 <template>

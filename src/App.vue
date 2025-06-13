@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import MainPage from './components/MainPage.vue';
+import EvacuationGrid from './components/EvacuationGrid.vue';
 import 'flag-icons/css/flag-icons.min.css';
 
 import { PAS } from '@/utils/pas-util';
@@ -34,7 +35,6 @@ const getOnlineUsers = async () => {
     console.error('Došlo je do greške kod dohvaćanja online korisnika:', error);
   }
 };
-const excelFields = { Ime: 'FullName', Tvrtka: 'CompanyName', "Svrha posjete": 'VisitPurpose', Kontakt: 'ContactPerson' };
 
 const getLanguages = async () => {
   try {
@@ -82,7 +82,10 @@ const updatePageTitle = (key) => {
     pageTitle.value = 'Administracijski panel';
   } else if (translations.value[currentLang.value] && translations.value[currentLang.value][key]) {
     pageTitle.value = translations.value[currentLang.value][key];
-  } else {
+  } else if (key === 'vatrodojava') {
+    pageTitle.value = 'Trenutno prisutni gosti';
+  }
+  else {
     pageTitle.value = '';
     console.warn(`Prijevod s ključem "${key}" nije pronađen u jeziku "${currentLang.value}".`);
   }
@@ -108,6 +111,14 @@ onMounted(async () => {
   updateTime();
   setInterval(updateTime, 1000);
   scheduleMidnightReset();
+
+  // Add event listeners for user activity
+  ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+    document.addEventListener(evt, resetInactivityTimer);
+  });
+
+  // Start the initial timer
+  resetInactivityTimer();
 });
 
 const currentView = ref(0);
@@ -151,38 +162,76 @@ const scheduleMidnightReset = () => {
   }, 60 * 1000);
 };
 
+const evacuationGrid = ref(false);
+const homeButtonVisible = ref(true);
+
 const goToMainPage = () => {
+  evacuationGrid.value = false;
   setCurrentView(0, 'welcome');
 };
 
+const toggleEvacuationGrid = () => {
+  evacuationGrid.value = !evacuationGrid.value;
+  if (evacuationGrid.value) {
+    homeButtonVisible.value = false;
+    updatePageTitle('vatrodojava');
+    setTimeout(() => {
+      homeButtonVisible.value = true;
+    }, 1000);
+  }
+  console.log('Evacuation grid toggled:', evacuationGrid.value);
+};
+
+// Inactivity handling
+const INACTIVITY_TIMEOUT = 120000; // 2 minutes in milliseconds
+let inactivityTimer = null;
+
+const resetInactivityTimer = () => {
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+  }
+  inactivityTimer = setTimeout(() => {
+    console.log('No activity detected for 2 minutes, refreshing page...');
+    window.location.reload();
+  }, INACTIVITY_TIMEOUT);
+};
+
+onUnmounted(() => {
+  ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+    document.removeEventListener(evt, resetInactivityTimer);
+  });
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+  }
+});
 </script>
 
 <template>
   <div class="page-header">
-    <button class="home-button" title="Početna">
-      <download-excel @click="getOnlineUsers" class="pi pi-print" :data="onlineUsers" name="evakuacija"
-        :fields="excelFields">.
-      </download-excel>
-      <span class="pi pi-home" @click="goToMainPage"></span>
-    </button>
-    <div class="clock">{{ time }}</div>
-    <div class="page-title">{{ pageTitle }}</div>
-    <div class="logo">
+    <div class="home-button" title="Početna" :class="{ 'home-button-hidden': homeButtonVisible.value }">
+      <span v-if="!evacuationGrid" class="pi pi-print" id="evacuation" @click="toggleEvacuationGrid"></span>
+      <span v-if="homeButtonVisible" class="pi pi-home" @click="goToMainPage"></span>
+    </div>
+    <div class="clock" :class="{ 'clock-evacuation': !evacuationGrid.value }">{{ time }}</div>
+    <!-- Only show title and logo when not in evacuation mode -->
+    <div v-if="!evacuationGrid" class="page-title">{{ pageTitle }}</div>
+    <div v-if="!evacuationGrid" class="logo">
       <img alt="HAIX logo" src="../src/assets/HAIX_group_blau.png" width="300" height="69" />
     </div>
   </div>
 
-  <div class="background-wrapper">
+  <div v-if="!evacuationGrid" class="background-wrapper">
     <MainPage :msg="welcomeMessage" :lang="currentLang" :updatePageTitle="updatePageTitle" :translations="translations"
       :currentView="currentView" :setCurrentView="setCurrentView" />
   </div>
-  <div class="language-buttons">
+  <div v-if="!evacuationGrid" class="language-buttons">
     <button v-for="language in languages" :key="language.ID"
       :class="{ selected: currentLang === language.LanguageCode }" @click="() => changeLanguage(language.LanguageCode)"
       :disabled="currentTitleKey === 'adminPanel'">
       <span :class="language.Flag"></span> {{ language.Name }}
     </button>
   </div>
+  <EvacuationGrid v-if="evacuationGrid" />
 </template>
 
 <style scoped>
@@ -205,6 +254,13 @@ const goToMainPage = () => {
   align-items: center;
   position: absolute;
   left: 1.5em;
+  z-index: 10000;
+  transition: opacity 0.3s ease;
+  gap: 1em;
+}
+
+.home-button-hidden {
+  opacity: 0;
 }
 
 .home-button:hover {
@@ -217,6 +273,10 @@ const goToMainPage = () => {
   text-align: center;
   font-size: 2em;
   font-weight: bold;
+}
+
+.clock-evacuation {
+  opacity: 0;
 }
 
 .page-title {

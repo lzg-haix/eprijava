@@ -52,7 +52,7 @@ const nextStep = () => {
 };
 
 const loggedInUser = ref(null);
-
+const showWelcomeMessage = ref(false);
 const handleLogIn = async () => {
   try {
     const response = await PAS.get(`/Visitors?filter=PINCode%20=%20${pinCode.value}`);
@@ -106,12 +106,14 @@ const confirmDetails = async () => {
     const response = await PAS.put(`/Visitors`, payload);
 
     if (response && response.data) {
-      console.log('User updated successfully:', response.data);
+      showWelcomeMessage.value = true;
+      setTimeout(() => {
+        showWelcomeMessage.value = false;
+        props.goToMainPage();
+      }, 2000); // Show message for 2 seconds
     } else {
       console.error('Unexpected response format:', response);
     }
-
-    props.goToMainPage();
   } catch (error) {
     console.error('Error updating user:', error.response?.data || error.message);
   }
@@ -151,15 +153,15 @@ onMounted(async () => {
     </div>
 
     <!-- Step 2: Welcome Message -->
-    <div v-else-if="step === 2">
-      <p>{{ translations[lang].welcomeBack }}, {{ loggedInUser?.FullName }}!</p>
+    <div v-else-if="step === 2" class="welcome-message">
+      <p>{{ translations[lang].welcomeBack }}, <strong>{{ loggedInUser?.FullName }}</strong>!</p>
       <p>
-        <strong>{{ translations[lang].visitPurpose }}:</strong> {{ loggedInUser?.VisitPurpose ||
-          translations[lang].notProvided }}
+        <strong>{{ translations[lang].visitPurpose }}:</strong><br />
+        {{ loggedInUser?.VisitPurpose || translations[lang].notProvided }}
       </p>
       <p>
-        <strong>{{ translations[lang].contactPerson }}:</strong> {{ loggedInUser?.ContactPerson ||
-          translations[lang].notProvided }}
+        <strong>{{ translations[lang].contactPerson }}:</strong><br />
+        {{ loggedInUser?.ContactPerson || translations[lang].notProvided }}
       </p>
       <p>{{ translations[lang].confirmDetails }}</p>
       <div class="button-group">
@@ -168,15 +170,23 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Reuse the SignUp component -->
-    <SignUp v-else-if="step === 3" :lang="lang" :allUsers="allUsers" :translations="translations"
-      :goToMainPage="() => props.goToMainPage(0, 'welcome')" :currentState="2" :loggedInUser="loggedInUser" />
+
 
     <!-- Step 5: Final Step -->
-    <div v-else>
+    <div v-else-if="step > 3">
       <p>{{ translations[lang].logInSuccessful }}</p>
     </div>
+
+    <!-- Welcome Back Overlay -->
+    <div v-if="showWelcomeMessage" class="welcome-overlay">
+      <div class="welcome-popup">
+        <h1>{{ translations[lang].welcomeBack }}, {{ loggedInUser?.FullName }}!</h1>
+      </div>
+    </div>
   </div>
+  <!-- Reuse the SignUp component -->
+  <SignUp v-if="step === 3" :lang="lang" :allUsers="allUsers" :translations="translations"
+    :goToMainPage="() => props.goToMainPage(0, 'welcome')" :currentState="2" :loggedInUser="loggedInUser" />
 </template>
 
 <style scoped>
@@ -194,7 +204,7 @@ onMounted(async () => {
   justify-content: center;
 }
 
-::v-deep(.hg-button) {
+.login-container ::v-deep(.hg-button) {
   background-color: #ffffff;
   color: #2c3e50;
   font-size: 3rem;
@@ -206,12 +216,12 @@ onMounted(async () => {
   transition: background-color 0.2s ease;
 }
 
-::v-deep(.hg-button:hover) {
+.login-container ::v-deep(.hg-button:hover) {
   background-color: #2c3e50;
   color: #ffffff;
 }
 
-::v-deep(.hg-button-active) {
+.login-container ::v-deep(.hg-button-active) {
   background-color: #ffffff !important;
   color: #2c3e50 !important;
   transition: none;
@@ -270,13 +280,13 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-::v-deep(.hg-button[data-skbtn="0"]) {
+.login-container ::v-deep(.hg-button[data-skbtn="0"]) {
   flex: 2;
   text-align: center;
   padding: 2.5rem 3.5rem;
 }
 
-::v-deep(.hg-button[data-skbtn="{bksp}"]) {
+.login-container ::v-deep(.hg-button[data-skbtn="{bksp}"]) {
   flex: 2;
   text-align: center;
   padding: 2.5rem 0.3rem;
@@ -284,5 +294,103 @@ onMounted(async () => {
 
 #forgot-password {
   margin-top: 1em;
+}
+
+/* Welcome Message Styles */
+.welcome-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  max-width: 80vw;
+  margin: 0 auto;
+}
+
+.welcome-message p {
+  font-size: 2.5rem;
+  margin: 1rem 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.welcome-message strong {
+  color: #0492D2;
+  font-weight: 600;
+}
+
+.button-group {
+  display: flex;
+  gap: 2rem;
+  margin-top: 3rem;
+  justify-content: center;
+}
+
+.button-group button {
+  font-size: 2rem;
+  padding: 1.5rem 3rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 250px;
+}
+
+.button-group button:first-child {
+  background-color: white;
+  color: #2c3e50;
+}
+
+.button-group button:last-child {
+  background-color: white;
+  color: #2c3e50;
+}
+
+.button-group button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.button-group button:active {
+  transform: translateY(0);
+}
+
+/* Welcome Overlay Styles */
+.welcome-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.welcome-popup {
+  background: #1a252f;
+  padding: 3rem 5rem;
+  border-radius: 15px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.welcome-popup h1 {
+  color: white;
+  font-size: 4rem;
+  text-align: center;
+  margin: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

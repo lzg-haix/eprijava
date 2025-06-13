@@ -33,6 +33,12 @@ const props = defineProps({
     }
 })
 
+const maximized = ref(false);
+
+const toggleMaximize = () => {
+    maximized.value = !maximized.value;
+};
+
 const whatToDisplay = ref();
 const setDisplay = async () => {
     switch (props.currentlyDisplaying) {

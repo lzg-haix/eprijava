@@ -210,6 +210,25 @@ onMounted(() => {
   justify-content: center;
 }
 
+.pin-input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pin-input ::v-deep(.hg-button) {
+  background-color: #ffffff;
+  color: #2c3e50;
+  font-size: 3rem;
+  border: none;
+  border-radius: 5px;
+  padding: 2rem 1.5rem;
+  margin: 0.5rem;
+  max-width: 2em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
 ::v-deep(.hg-button) {
   background-color: #ffffff;
   color: #2c3e50;
@@ -236,29 +255,4 @@ onMounted(() => {
 .suggestion-card p {
   color: #2c3e50;
 }
-
-
-
-/* ::v-deep(.hg-button:hover) {
-  background-color: #2c3e50;
-  color: #ffffff;
-}
-
-::v-deep(.hg-button-active) {
-  background-color: #ffffff !important;
-  color: #2c3e50 !important;
-  transition: none;
-} */
-
-/* ::v-deep(.hg-button[data-skbtn="0"]) {
-  flex: 2;
-  text-align: center;
-  padding: 2.5rem 3.5rem;
-}
-
-::v-deep(.hg-button[data-skbtn="{bksp}"]) {
-  flex: 2;
-  text-align: center;
-  padding: 2.5rem 0.3rem;
-} */
 </style>
