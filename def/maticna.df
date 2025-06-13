@@ -1,0 +1,637 @@
+ADD TABLE "eVisitor_Companies"
+  AREA "Data"
+  DUMP-NAME "eVisitor_Companies"
+
+ADD FIELD "ID" OF "eVisitor_Companies" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "1"
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 20
+  MANDATORY
+
+ADD FIELD "Name" OF "eVisitor_Companies" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Name"
+  POSITION 3
+  MAX-WIDTH 100
+  ORDER 30
+
+ADD FIELD "Active" OF "eVisitor_Companies" AS logical 
+  FORMAT "yes/no"
+  INITIAL ?
+  LABEL "Active"
+  POSITION 4
+  MAX-WIDTH 1
+  ORDER 40
+
+ADD FIELD "Inserted" OF "eVisitor_Companies" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Inserted"
+  POSITION 5
+  MAX-WIDTH 8
+  ORDER 50
+
+ADD FIELD "Updated" OF "eVisitor_Companies" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Updated"
+  POSITION 6
+  MAX-WIDTH 8
+  ORDER 60
+
+ADD FIELD "InsertUser" OF "eVisitor_Companies" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "InsertUser"
+  POSITION 7
+  MAX-WIDTH 100
+  ORDER 70
+
+ADD FIELD "UpdateUser" OF "eVisitor_Companies" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "UpdateUser"
+  POSITION 8
+  MAX-WIDTH 100
+  ORDER 80
+
+ADD FIELD "Industry" OF "eVisitor_Companies" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "Industry"
+  POSITION 9
+  MAX-WIDTH 100
+  COLUMN-LABEL "Industry"
+  ORDER 90
+
+ADD FIELD "Location" OF "eVisitor_Companies" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "Location"
+  POSITION 10
+  MAX-WIDTH 100
+  COLUMN-LABEL "Location"
+  ORDER 100
+
+ADD INDEX "ID" ON "eVisitor_Companies" 
+  AREA "Data"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ID" ASCENDING 
+
+ADD TABLE "eVisitor_Contacts"
+  AREA "Data"
+  DUMP-NAME "eVisitor_Contacts"
+
+ADD FIELD "ID" OF "eVisitor_Contacts" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "1"
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 20
+  MANDATORY
+
+ADD FIELD "FullName" OF "eVisitor_Contacts" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "FullName"
+  POSITION 3
+  MAX-WIDTH 100
+  ORDER 30
+
+ADD FIELD "Email" OF "eVisitor_Contacts" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Email"
+  POSITION 4
+  MAX-WIDTH 100
+  ORDER 40
+
+ADD FIELD "Phone" OF "eVisitor_Contacts" AS character 
+  FORMAT "X(100)"
+  INITIAL ?
+  LABEL "Phone"
+  POSITION 5
+  MAX-WIDTH 200
+  ORDER 50
+
+ADD FIELD "Active" OF "eVisitor_Contacts" AS logical 
+  FORMAT "yes/no"
+  INITIAL ?
+  LABEL "Active"
+  POSITION 6
+  MAX-WIDTH 1
+  ORDER 60
+
+ADD FIELD "Inserted" OF "eVisitor_Contacts" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Inserted"
+  POSITION 7
+  MAX-WIDTH 8
+  ORDER 70
+
+ADD FIELD "Updated" OF "eVisitor_Contacts" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Updated"
+  POSITION 8
+  MAX-WIDTH 8
+  ORDER 80
+
+ADD FIELD "InsertUser" OF "eVisitor_Contacts" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "InsertUser"
+  POSITION 9
+  MAX-WIDTH 100
+  ORDER 90
+
+ADD FIELD "UpdateUser" OF "eVisitor_Contacts" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "UpdateUser"
+  POSITION 10
+  MAX-WIDTH 100
+  ORDER 100
+
+ADD FIELD "Department" OF "eVisitor_Contacts" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "Department"
+  POSITION 11
+  MAX-WIDTH 100
+  COLUMN-LABEL "Department"
+  ORDER 110
+
+ADD INDEX "ID" ON "eVisitor_Contacts" 
+  AREA "Data"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ID" ASCENDING 
+
+ADD TABLE "eVisitor_Languages"
+  AREA "Data"
+  DUMP-NAME "eVisitor_Languages"
+
+ADD FIELD "ID" OF "eVisitor_Languages" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "LanguageCode" OF "eVisitor_Languages" AS character 
+  FORMAT "X(10)"
+  INITIAL ?
+  LABEL "Language Code"
+  POSITION 3
+  MAX-WIDTH 20
+  ORDER 20
+
+ADD FIELD "Name" OF "eVisitor_Languages" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Name"
+  POSITION 4
+  MAX-WIDTH 100
+  ORDER 30
+
+ADD FIELD "LangColor" OF "eVisitor_Languages" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Color"
+  POSITION 5
+  MAX-WIDTH 100
+  ORDER 40
+
+ADD FIELD "Order" OF "eVisitor_Languages" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "Order"
+  POSITION 6
+  MAX-WIDTH 4
+  ORDER 50
+
+ADD FIELD "KeyboardMap" OF "eVisitor_Languages" AS character 
+  FORMAT "X(10)"
+  INITIAL ?
+  LABEL "Keyboard Map"
+  POSITION 7
+  MAX-WIDTH 20
+  ORDER 60
+
+ADD FIELD "Inserted" OF "eVisitor_Languages" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  POSITION 8
+  MAX-WIDTH 8
+  ORDER 70
+
+ADD FIELD "Updated" OF "eVisitor_Languages" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  POSITION 9
+  MAX-WIDTH 8
+  ORDER 80
+
+ADD FIELD "InsertUser" OF "eVisitor_Languages" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Insert User"
+  POSITION 10
+  MAX-WIDTH 100
+  ORDER 90
+
+ADD FIELD "UpdateUser" OF "eVisitor_Languages" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Update User"
+  POSITION 11
+  MAX-WIDTH 100
+  ORDER 100
+
+ADD FIELD "Flag" OF "eVisitor_Languages" AS character 
+  FORMAT "x(20)"
+  INITIAL ""
+  LABEL "Flag"
+  POSITION 12
+  MAX-WIDTH 40
+  COLUMN-LABEL "Flag"
+  ORDER 110
+
+ADD FIELD "Active" OF "eVisitor_Languages" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Active"
+  POSITION 13
+  MAX-WIDTH 1
+  COLUMN-LABEL "Active"
+  ORDER 120
+
+ADD INDEX "ID" ON "eVisitor_Languages" 
+  AREA "Data"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ID" ASCENDING 
+
+ADD TABLE "eVisitor_LanguagesEntries"
+  AREA "Data"
+  DUMP-NAME "eVisitor_LanguagesEntries"
+
+ADD FIELD "ID" OF "eVisitor_LanguagesEntries" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "LanguageID" OF "eVisitor_LanguagesEntries" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "Language ID"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 20
+
+ADD FIELD "EntryName" OF "eVisitor_LanguagesEntries" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Entry Name"
+  POSITION 4
+  MAX-WIDTH 100
+  ORDER 30
+
+ADD FIELD "LangValue" OF "eVisitor_LanguagesEntries" AS character 
+  FORMAT "X(1000)"
+  INITIAL ?
+  LABEL "Value"
+  POSITION 5
+  MAX-WIDTH 2000
+  ORDER 40
+
+ADD FIELD "Inserted" OF "eVisitor_LanguagesEntries" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  POSITION 6
+  MAX-WIDTH 8
+  ORDER 50
+
+ADD FIELD "Updated" OF "eVisitor_LanguagesEntries" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  POSITION 7
+  MAX-WIDTH 8
+  ORDER 60
+
+ADD FIELD "InsertUser" OF "eVisitor_LanguagesEntries" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Insert User"
+  POSITION 8
+  MAX-WIDTH 100
+  ORDER 70
+
+ADD FIELD "UpdateUser" OF "eVisitor_LanguagesEntries" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Update User"
+  POSITION 9
+  MAX-WIDTH 100
+  ORDER 80
+
+ADD FIELD "EntryDescription" OF "eVisitor_LanguagesEntries" AS character 
+  FORMAT "x(200)"
+  INITIAL ""
+  LABEL "EntryDescription"
+  POSITION 10
+  MAX-WIDTH 400
+  ORDER 90
+
+ADD INDEX "ID" ON "eVisitor_LanguagesEntries" 
+  AREA "Data"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ID" ASCENDING 
+
+ADD INDEX "LanguageID" ON "eVisitor_LanguagesEntries" 
+  AREA "Data"
+  INDEX-FIELD "LanguageID" ASCENDING 
+
+ADD TABLE "eVisitor_VisitLog"
+  AREA "Data"
+  DUMP-NAME "eVisitor_VisitLog"
+
+ADD FIELD "VisitorID" OF "eVisitor_VisitLog" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "VisitorID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 20
+
+ADD FIELD "CompanyID" OF "eVisitor_VisitLog" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "CompanyID"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 30
+
+ADD FIELD "ContactID" OF "eVisitor_VisitLog" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "ContactID"
+  POSITION 4
+  MAX-WIDTH 4
+  ORDER 40
+
+ADD FIELD "ArrivalDateTime" OF "eVisitor_VisitLog" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "ArrivalDateTime"
+  POSITION 5
+  MAX-WIDTH 8
+  ORDER 50
+
+ADD FIELD "DepartureDateTime" OF "eVisitor_VisitLog" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "DepartureDateTime"
+  POSITION 6
+  MAX-WIDTH 8
+  ORDER 60
+
+ADD FIELD "VisitPurpose" OF "eVisitor_VisitLog" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "VisitPurpose"
+  POSITION 7
+  MAX-WIDTH 100
+  ORDER 70
+
+ADD FIELD "Inserted" OF "eVisitor_VisitLog" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Inserted"
+  POSITION 8
+  MAX-WIDTH 8
+  ORDER 80
+
+ADD FIELD "Updated" OF "eVisitor_VisitLog" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Updated"
+  POSITION 9
+  MAX-WIDTH 8
+  ORDER 90
+
+ADD INDEX "VisitorID" ON "eVisitor_VisitLog" 
+  AREA "Data"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "VisitorID" ASCENDING 
+
+ADD INDEX "CompanyID" ON "eVisitor_VisitLog" 
+  AREA "Data"
+  INDEX-FIELD "CompanyID" ASCENDING 
+
+ADD INDEX "ContactID" ON "eVisitor_VisitLog" 
+  AREA "Data"
+  INDEX-FIELD "ContactID" ASCENDING 
+
+ADD INDEX "VisitPurpose" ON "eVisitor_VisitLog" 
+  AREA "Data"
+  INDEX-FIELD "VisitPurpose" ASCENDING 
+
+ADD TABLE "eVisitor_Visitors"
+  AREA "Data"
+  DUMP-NAME "eVisitor_Visitors"
+
+ADD FIELD "ID" OF "eVisitor_Visitors" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "1"
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 20
+  MANDATORY
+
+ADD FIELD "FullName" OF "eVisitor_Visitors" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "FullName"
+  POSITION 3
+  MAX-WIDTH 100
+  ORDER 30
+
+ADD FIELD "CompanyName" OF "eVisitor_Visitors" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "CompanyName"
+  POSITION 4
+  MAX-WIDTH 100
+  ORDER 40
+
+ADD FIELD "Active" OF "eVisitor_Visitors" AS logical 
+  FORMAT "yes/no"
+  INITIAL ?
+  LABEL "Active"
+  POSITION 5
+  MAX-WIDTH 1
+  ORDER 50
+
+ADD FIELD "GDPRAgreement" OF "eVisitor_Visitors" AS logical 
+  FORMAT "yes/no"
+  INITIAL ?
+  LABEL "GDPRAgreement"
+  POSITION 6
+  MAX-WIDTH 1
+  ORDER 60
+
+ADD FIELD "Inserted" OF "eVisitor_Visitors" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Inserted"
+  POSITION 8
+  MAX-WIDTH 8
+  ORDER 80
+
+ADD FIELD "Updated" OF "eVisitor_Visitors" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  LABEL "Updated"
+  POSITION 9
+  MAX-WIDTH 8
+  ORDER 90
+
+ADD FIELD "InsertUser" OF "eVisitor_Visitors" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "InsertUser"
+  POSITION 10
+  MAX-WIDTH 100
+  ORDER 100
+
+ADD FIELD "UpdateUser" OF "eVisitor_Visitors" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "UpdateUser"
+  POSITION 11
+  MAX-WIDTH 100
+  ORDER 110
+
+ADD FIELD "Online" OF "eVisitor_Visitors" AS logical 
+  FORMAT "yes/no"
+  INITIAL ?
+  LABEL "Online"
+  POSITION 12
+  MAX-WIDTH 1
+  ORDER 120
+
+ADD FIELD "PINCode" OF "eVisitor_Visitors" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "PINCode"
+  POSITION 13
+  MAX-WIDTH 4
+  ORDER 130
+
+ADD FIELD "VisitPurpose" OF "eVisitor_Visitors" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "VisitPurpose"
+  POSITION 14
+  MAX-WIDTH 100
+  ORDER 140
+
+ADD FIELD "ContactPerson" OF "eVisitor_Visitors" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "ContactPerson"
+  POSITION 15
+  MAX-WIDTH 100
+  ORDER 150
+
+ADD INDEX "ID" ON "eVisitor_Visitors" 
+  AREA "Data"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ID" ASCENDING 
+
+ADD TABLE "eVisitor_VisitPurpose"
+  AREA "Data"
+  DUMP-NAME "eVisitor_VisitPurpose"
+
+ADD FIELD "ID" OF "eVisitor_VisitPurpose" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL ?
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 4
+  ORDER 10
+
+ADD FIELD "Favourite" OF "eVisitor_VisitPurpose" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Favourite"
+  POSITION 4
+  MAX-WIDTH 100
+  ORDER 30
+
+ADD FIELD "Inserted" OF "eVisitor_VisitPurpose" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  POSITION 6
+  MAX-WIDTH 8
+  ORDER 50
+
+ADD FIELD "Updated" OF "eVisitor_VisitPurpose" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS"
+  INITIAL ?
+  POSITION 7
+  MAX-WIDTH 8
+  ORDER 60
+
+ADD FIELD "InsertUser" OF "eVisitor_VisitPurpose" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Insert User"
+  POSITION 8
+  MAX-WIDTH 100
+  ORDER 70
+
+ADD FIELD "LanguageEntry" OF "eVisitor_VisitPurpose" AS character 
+  FORMAT "X(50)"
+  INITIAL ?
+  LABEL "Insert User"
+  POSITION 9
+  MAX-WIDTH 100
+  ORDER 80
+
+ADD FIELD "UpdateUser" OF "eVisitor_VisitPurpose" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "UpdateUser"
+  POSITION 10
+  MAX-WIDTH 100
+  ORDER 90
+
+ADD INDEX "ID" ON "eVisitor_VisitPurpose" 
+  AREA "Data"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ID" ASCENDING 
+
+.
+PSC
+cpstream=1250
+.
+0000012776
