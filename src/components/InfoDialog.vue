@@ -2,6 +2,13 @@
 import { ref, onMounted, watch, nextTick } from 'vue';
 
 // import { oepas_dev2 } from '@/utils/pas-util';
+// PAS - razvojna instanca na dev-inpos serveru
+import { PAS } from '@/utils/pas-util';
+if (!PAS) {
+    console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
+} else {
+    // console.log('PAS instanca povezana.');
+}
 
 const props = defineProps({
     currentlyDisplaying: {
@@ -19,7 +26,11 @@ const props = defineProps({
 
 onMounted(() => {
     getItemFields(props.currentlyDisplaying);
+    if (props.newOrEdit === 'new') {
+        getGeneratedPIN();
+    }
 });
+
 
 // polja za prikazati
 const itemFields = ref(null);
@@ -102,8 +113,20 @@ const hideInfoDialog = async () => {
 //     }
 // };
 
-const localItem = ref({ ...props.itemToEdit });
-
+const localItem = ref(props.newOrEdit === 'new' ? {} : { ...props.itemToEdit });
+const getGeneratedPIN = async () => {
+    try {
+        const response = await PAS.get('/PIN');
+        if (response?.data?.dsPIN?.ttPIN?.length > 0) {
+            localItem.value.PINCode = response.data.dsPIN.ttPIN[0].PINCode;
+            return response.data.dsPIN.ttPIN[0].PINCode;
+        }
+        throw new Error('No PIN received from server');
+    } catch (error) {
+        console.error('Error generating PIN:', error);
+        throw error;
+    }
+};
 // spremanje izmjena
 const saveItem = () => {
     let wrappedItem;
@@ -157,7 +180,12 @@ async function resizeLangValue() {
 
 watch(
     [() => props.newOrEdit, () => props.itemToEdit],
-    () => {
+    ([newOrEdit, itemToEdit]) => {
+        if (newOrEdit === 'new') {
+            localItem.value = {};
+        } else {
+            localItem.value = { ...itemToEdit };
+        }
         resizeEntryDescription();
         resizeLangValue();
     },
@@ -199,6 +227,9 @@ watch(
                                 rows="1"
                                 style="resize: none; overflow: hidden; width: 20em; border-radius: 0.5em; text-align: left;"></textarea>
                         </div>
+                        <div v-else-if="field.field === 'PINCode'">
+                            <input :id="field.field" v-model="localItem[field.field]" type="text" readonly />
+                        </div>
                         <div v-else>
                             <input :id="field.field" v-model="localItem[field.field]" type="text" required
                                 :readonly="field.field === 'EntryName'" />
@@ -221,6 +252,9 @@ watch(
                             <textarea class="description" :id="field.field" v-model="localItem[field.field]"
                                 @input="autoResize($event)" rows="1"
                                 style="resize: none; overflow: hidden; width: 20em; border-radius: 0.5em; text-align: left;"></textarea>
+                        </div>
+                        <div v-else-if="field.field === 'PINCode'">
+                            <input :id="field.field" v-model="localItem[field.field]" type="text" readonly />
                         </div>
                         <div v-else>
                             <input :id="field.field" v-model="localItem[field.field]" type="text" required
@@ -260,7 +294,7 @@ watch(
     background-color: white;
     color: black;
     padding: 3em;
-    border-radius: 1.5em;
+    border: 3px solid #0492D2;
     text-align: center;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
@@ -289,7 +323,7 @@ input {
 }
 
 .confirm-button {
-    background-color: #09ff00;
+    background-color: #0492D2;
     color: black;
     border: 1px solid #000;
     border-radius: 4px;
@@ -300,7 +334,7 @@ input {
 }
 
 .cancel-button {
-    background-color: #fbff00;
+    background-color: rgba(255, 30, 30, 0.842);
     color: black;
     border: 1px solid #000;
     border-radius: 4px;
@@ -311,10 +345,10 @@ input {
 }
 
 .confirm-button:hover {
-    background-color: #67e663;
+    background-color: #06a6f0;
 }
 
 .cancel-button:hover {
-    background-color: #dee05e;
+    background-color: rgba(202, 37, 37, 0.842);
 }
 </style>

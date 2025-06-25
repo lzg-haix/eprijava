@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { RouterLink, RouterView } from 'vue-router'
 import SignUp from './SignUp.vue'
 import LogIn from './LogIn.vue'
 import LogOut from './LogOut.vue'
@@ -69,8 +70,18 @@ onMounted(async () => {
   showView(0, 'welcome');
 });
 
+// Add isAdmin ref
+const isAdmin = ref(false);
 
-
+// Add handler for admin status
+const handleAdminStatus = (status) => {
+  isAdmin.value = status;
+  if (status) {
+    showView(4, 'adminPanel');
+  } else {
+    showView(0, 'welcome');
+  }
+};
 </script>
 
 <template>
@@ -79,15 +90,17 @@ onMounted(async () => {
       <button @click="showView(1, 'signUp')">{{ translations[lang]?.signUp }}</button>
       <button @click="showView(2, 'signIn')">{{ translations[lang]?.signIn }}</button>
       <button @click="showView(3, 'logOut')">{{ translations[lang]?.logOut }}</button>
-      <button @click="showView(4, 'adminPanel')">admin</button>
+      <!-- <button @click="showView(4, 'adminPanel')">admin</button> -->
     </div>
     <SignUp v-else-if="currentView === 1" :lang="lang" :allUsers="allUsers" :translations="translations"
       :goToMainPage="() => showView(0, 'welcome')" :currentState="1" @pushNewUser="getUsers()" />
     <LogIn v-else-if="currentView === 2" :lang="lang" :offlineUsers="offlineUsers" :translations="translations"
-      :goToMainPage="() => showView(0, 'welcome')" />
+      :goToMainPage="() => showView(0, 'welcome')" @isAdmin="handleAdminStatus" />
     <LogOut v-else-if="currentView === 3" />
     <AdminPanel v-else-if="currentView === 4" :translations="translations" />
   </div>
+
+
 </template>
 
 <style scoped>
@@ -116,7 +129,7 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1em;
+  gap: 10em;
   margin-top: 5.5rem;
 }
 

@@ -40,6 +40,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['updateView', 'isAdmin']);
+
 const step = ref(1);
 const pinCode = ref('');
 
@@ -54,12 +56,18 @@ const nextStep = () => {
 const loggedInUser = ref(null);
 const showWelcomeMessage = ref(false);
 const handleLogIn = async () => {
+  if (pinCode.value === '133747') {
+    emit('isAdmin', true);
+    emit('updateView', 'adminPanel');
+    return;
+  }
   try {
     const response = await PAS.get(`/Visitors?filter=PINCode%20=%20${pinCode.value}`);
+    console.log('Response from server:', response.data);
     const user = response.data.dsVisitors.ttVisitors[0];
     if (user) {
       if (user.Online) {
-        alert(`${user.fullName} is already logged in!`);
+        alert(`${user.FullName} is already logged in!`);
         step.value = 1;
         return;
       }
@@ -103,9 +111,46 @@ const confirmDetails = async () => {
       },
     };
 
-    const response = await PAS.put(`/Visitors`, payload);
+    // Fetch company ID
+    const companyResponse = await PAS.get(`/Companies`);
+    const company = companyResponse.data.dsCompanies.ttCompanies.find(
+      c => c.Name === loggedInUser.value.CompanyName
+    );
+    let selectedCompanyID = ref(null);
+    selectedCompanyID.value = company?.ID;
+    console.log('Selected Company ID:', selectedCompanyID.value);
 
+    // Fetch contact person ID
+    const contactResponse = await PAS.get(`/Contacts`);
+    const contactPerson = contactResponse.data.dsContacts.ttContacts.find(
+      e => e.FullName === loggedInUser.value.ContactPerson
+    );
+    let selectedContactPersonID = ref(null);
+    selectedContactPersonID.value = contactPerson?.ID;
+    console.log('Selected Contact Person ID:', selectedContactPersonID.value);
+
+    const response = await PAS.put(`/Visitors`, payload);
     if (response && response.data) {
+      const newVisit = {
+        dsVisitor_Company_Contact: {
+          ttVisitor_Company_Contact: [
+            {
+              VisitorID: loggedInUser.value.ID,
+              CompanyID: selectedCompanyID.value,
+              ContactID: selectedContactPersonID.value,
+              ArrivalDateTime: new Date().toISOString(),
+              VisitPurpose: loggedInUser.value.VisitPurpose || '',
+              Inserted: new Date().toISOString()
+            }
+          ]
+        }
+      };
+      const newVisitResponse = await PAS.post('/Visitor_Company_Contact', newVisit);
+      if (newVisitResponse && newVisitResponse.data) {
+        console.log('New visit created successfully:', newVisit);
+      } else {
+        console.error('Unexpected response format for visit creation:', newVisitResponse);
+      }
       showWelcomeMessage.value = true;
       setTimeout(() => {
         showWelcomeMessage.value = false;

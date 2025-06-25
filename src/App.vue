@@ -111,7 +111,7 @@ onMounted(async () => {
   updateTime();
   setInterval(updateTime, 1000);
   scheduleMidnightReset();
-
+  // setAllOnlineUsersOffline();
   // Add event listeners for user activity
   ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
     document.addEventListener(evt, resetInactivityTimer);
@@ -167,6 +167,7 @@ const homeButtonVisible = ref(true);
 
 const goToMainPage = () => {
   evacuationGrid.value = false;
+  window.location.reload();
   setCurrentView(0, 'welcome');
 };
 
@@ -212,8 +213,7 @@ onUnmounted(() => {
       <span v-if="!evacuationGrid" class="pi pi-print" id="evacuation" @click="toggleEvacuationGrid"></span>
       <span v-if="homeButtonVisible" class="pi pi-home" @click="goToMainPage"></span>
     </div>
-    <div class="clock" :class="{ 'clock-evacuation': !evacuationGrid.value }">{{ time }}</div>
-    <!-- Only show title and logo when not in evacuation mode -->
+    <div class="clock" :class="{ 'clock-evacuation': evacuationGrid }">{{ time }}</div>
     <div v-if="!evacuationGrid" class="page-title">{{ pageTitle }}</div>
     <div v-if="!evacuationGrid" class="logo">
       <img alt="HAIX logo" src="../src/assets/HAIX_group_blau.png" width="300" height="69" />
@@ -344,7 +344,7 @@ onUnmounted(() => {
   margin: auto;
   width: 96vw;
   height: 87vh;
-  border-radius: 20px;
+  border-radius: 10px;
 }
 
 .background-wrapper {

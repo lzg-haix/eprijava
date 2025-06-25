@@ -1,13 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
-// import { PAS } from '@/utils/pas-util';
-// if (!PAS) {
-//     console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
-// } else {
-//     // console.log('PAS instanca povezana.');
-// }
-
 // PAS - razvojna instanca na dev-inpos serveru
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
@@ -20,31 +13,14 @@ import DataTable from './DataTable.vue';
 import LanguageTable from './LanguageTable.vue';
 
 const props = defineProps({
-    translations: Object, // prijevodi proslijeđeni iz App.vue
+    translations: Object,
 });
 
-const activeTab = ref('Visitors'); // Tracks the currently active tab
-const editingRows = ref([]); // Tracks the rows being edited
-
-const items = ref([
-    {
-        label: 'Update',
-        icon: 'pi pi-refresh'
-    },
-    {
-        label: 'Delete',
-        icon: 'pi pi-times'
-    }
-])
-
-// Data for users, companies, and contacts
+const activeTab = ref('Visitors');
 const users = ref([]);
 const companies = ref([]);
 const contacts = ref([]);
-const translations = ref([props.translations]);
-// console.log('translations:', translations.value);
 
-// Columns for each tab
 const userColumns = ref([
     { field: 'FullName', header: 'Puno ime' },
     { field: 'CompanyName', header: 'Tvrtka' },
@@ -101,110 +77,35 @@ const filteredContacts = computed(() => {
     );
 });
 
-// Function to switch tabs
 const switchTab = (tab) => {
     activeTab.value = tab;
     searchQuery.value = '';
     companySearchQuery.value = '';
     contactSearchQuery.value = '';
-    // console.log(activeTab.value);
 };
 
-// Fetch data from the backend
 const fetchData = async () => {
     try {
         const [usersResponse, companiesResponse, contactsResponse] = await Promise.all([
             PAS.get('/Visitors'),
             PAS.get('/Companies'),
             PAS.get('/Contacts'),
-            // PAS.get('/translations'),
         ]);
 
         users.value = usersResponse.data.dsVisitors.ttVisitors;
         companies.value = companiesResponse.data.dsCompanies.ttCompanies;
         contacts.value = contactsResponse.data.dsContacts.ttContacts;
-        // translations.value = translationsResponse.data;
 
-        // console.log('Data fetched successfully:', { users: users.value, companies: companies.value, contacts: contacts.value });
     } catch (error) {
         console.error('Error fetching data:', error);
     }
 };
 
-// Handle row edit save
-const onRowEditSave = async (event) => {
-    const { newData } = event;
-
-    try {
-        // Determine the active tab and update the corresponding data source
-        if (activeTab.value === 'Visitors') {
-            await PAS.patch(`/Visitors/${newData.id}`, newData);
-            const index = users.value.findIndex((user) => user.id === newData.id);
-            if (index !== -1) users.value[index] = newData;
-        } else if (activeTab.value === 'Companies') {
-            await PAS.patch(`/Companies/${newData.id}`, newData);
-            const index = companies.value.findIndex((company) => company.id === newData.id);
-            if (index !== -1) companies.value[index] = newData;
-        } else if (activeTab.value === 'Contacts') {
-            await PAS.patch(`/Contacts/${newData.id}`, newData);
-            const index = contacts.value.findIndex((contact) => contact.id === newData.id);
-            if (index !== -1) contacts.value[index] = newData;
-        }
-        // Debugging: Log the editingRows object
-        // console.log('Row updated:', newData);
-    } catch (error) {
-        console.error('Error updating row:', error);
-    }
-};
-
-// Fetch data when the component is mounted
 onMounted(() => {
     fetchData();
-    switchTab('Visitors'); // Set default tab to Visitors
+    switchTab('Visitors');
 });
 
-const userDialog = ref(false); // Controls the visibility of the user dialog
-const newUser = ref({}); // Holds the new user data
-const showNewUserDialog = async () => {
-    try {
-        userDialog.value = true; // Show the dialog
-    } catch (error) {
-        console.error('Error adding user:', error);
-    }
-};
-const addUser = async () => {
-    try {
-        // Find the last used user ID and increment it for the new user
-        const lastUserId = users.value.length > 0 ? Math.max(...users.value.map(user => user.id)) : 0;
-        newUser.value.id = lastUserId + 1;
-
-        // Assign the new user's Online value to false
-        newUser.value.online = false;
-
-        // Generate a unique 4-digit pinCode for the new user
-        let uniquePinCode;
-        do {
-            uniquePinCode = Math.floor(1000 + Math.random() * 9000);
-        } while (users.value.some(user => user.pinCode === uniquePinCode));
-        newUser.value.pinCode = uniquePinCode;
-
-        // Make a POST request to create a new user
-        const response = await PAS.post('/Visitors', newUser.value);
-
-        // Add the newly created user to the users list
-        users.value.push(response.data);
-
-        // Reset the newUser object and close the dialog
-        newUser.value = {};
-        userDialog.value = false;
-
-        // console.log('User added successfully:', response.data);
-    } catch (error) {
-        console.error('Error adding user:', error);
-    }
-};
-
-// Handle the row-deleted event
 const handleRowDeleted = () => {
     fetchData();
 };
@@ -216,7 +117,7 @@ const handleNewRowCreated = () => {
 
 <template>
     <div class="admin-panel">
-        <!-- Header with Tabs -->
+
         <header class="admin-header">
             <button @click="switchTab('Visitors')" :class="{ active: activeTab === 'Visitors' }">Gosti</button>
             <button @click="switchTab('Companies')" :class="{ active: activeTab === 'Companies' }">Tvrtke</button>
@@ -225,13 +126,13 @@ const handleNewRowCreated = () => {
                 :class="{ active: activeTab === 'Translations' }">Prijevodi</button>
         </header>
 
-        <!-- Tab Content -->
         <div class="tab-content">
             <LanguageTable v-if="activeTab === 'Translations'" />
             <DataTable v-else :data="currentData" :displayDetails="currentColumns" :currently-displaying="activeTab"
                 @newItemCreated="handleNewRowCreated" @row-deleted="handleRowDeleted" @updateItem="handleRowDeleted" />
         </div>
     </div>
+
 </template>
 
 <style scoped>

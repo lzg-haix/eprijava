@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import MainPage from '../components/MainPage.vue'
 import SignUp from '../components/SignUp.vue'
+import AdminPanel from '../components/AdminPanel.vue'
 
 const routes = [
   {
@@ -9,9 +10,9 @@ const routes = [
     component: MainPage,
   },
   {
-    path: '/signup',
-    name: 'SignUp',
-    component: SignUp,
+    path: '/admin',
+    name: 'AdminPanel',
+    component: AdminPanel,
   },
 ]
 

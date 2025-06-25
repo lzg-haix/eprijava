@@ -286,6 +286,21 @@ const skipStepTwo = ref(false) // preskoči korak 2 ako je u pitanju dodatan gos
 let debounceTimeout // debounce timeout za filtriranje
 const newVisitorData = ref(null); // Add this near your other refs
 
+// Add this helper function to fetch CompanyID
+const getCompanyId = async (companyName) => {
+  try { //'/Languages?filter=Active%20=%20yes'
+    const response = await PAS.get(`/Companies?filter=Name%20= "${companyName}"`);
+    if (response?.data?.dsCompanies?.ttCompanies?.length > 0) {
+      console.log('Company found:', response);
+      return response.data.dsCompanies.ttCompanies[0].ID;
+    }
+    throw new Error('Company not found');
+  } catch (error) {
+    console.error('Error fetching company ID:', error);
+    throw error;
+  }
+};
+
 const finalizeLogIn = async () => {
   try {
     if (!props.loggedInUser) {
@@ -293,7 +308,12 @@ const finalizeLogIn = async () => {
       return;
     }
 
-    const payload = {
+    // Fetch CompanyID first
+    const companyId = await getCompanyId(props.loggedInUser.CompanyName);
+    console.log('Fetched CompanyID:', companyId);
+
+    // Update visitor record
+    const visitorPayload = {
       dsVisitors: {
         ttVisitors: [
           {
@@ -315,25 +335,46 @@ const finalizeLogIn = async () => {
       },
     };
 
-    const updatedUser = ref(props.loggedInUser);
-    console.log('Updating user:', payload);
-    updatedUser.value = {
-      VisitPurpose: visitPurpose.value,
-      ContactPerson: contactPerson.value,
-      Online: true,
+    // Create visit record with fetched CompanyID
+    const visitPayload = {
+      dsVisitor_Company_Contact: {
+        ttVisitor_Company_Contact: [
+          {
+            VisitorID: props.loggedInUser.ID,
+            CompanyID: companyId,
+            ContactID: selectedContactPerson.value.ID,
+            ArrivalDateTime: new Date().toISOString(),
+            VisitPurpose: visitPurpose.value,
+            Active: true,
+            InsertUser: 'user/login',
+            UpdateUser: 'user/login',
+            Inserted: new Date().toISOString(),
+            Updated: new Date().toISOString()
+          }
+        ]
+      }
     };
 
-    const response = await PAS.put(`/Visitors`, payload);
-
-    if (response && response.data) {
-      console.log('User updated successfully:', response.data);
-    } else {
-      console.error('Unexpected response format:', response);
+    // Update visitor status
+    const visitorResponse = await PAS.put('/Visitors', visitorPayload);
+    if (!visitorResponse || !visitorResponse.data) {
+      throw new Error('Failed to update visitor');
     }
+    console.log('visit log data:', visitPayload);
+    // Create visit record
+    const visitResponse = await PAS.post('/Visitor_Company_Contact', visitPayload);
+    if (!visitResponse || !visitResponse.data) {
+      throw new Error('Failed to create visit record');
+    }
+
+    console.log('Login successful:', {
+      visitor: visitorResponse.data,
+      visit: visitResponse.data
+    });
 
     props.goToMainPage();
   } catch (error) {
-    console.error('Error updating user:', error.response?.data || error.message);
+    console.error('Error during login:', error.response?.data || error.message);
   }
 };
 
@@ -396,15 +437,16 @@ const nextStep = async () => {
         skipStepTwo.value = true;
         step.value = 1;
         fullName.value = '';
-        visitPurpose.value = '';
-        contactPerson.value = '';
+        // visitPurpose.value = '';
+        // contactPerson.value = '';
         gdprAgreement.value = false;
         additionalVisitorBool.value = false;
       } else {
         step.value = 7;
-        companyName.value = '';
-        selectedCompany.value = '';
+
         setTimeout(() => {
+          companyName.value = '';
+          selectedCompany.value = '';
           props.goToMainPage();
         }, 5000);
       }
@@ -446,12 +488,50 @@ const handleSignUp = async () => {
       }
     };
 
+    // const getVisitorId = async (fullName, companyName) => {
+    //   try {
+    //     const response = await PAS.get(`/Visitors?filter=FullName%20=%20"${fullName}"%20AND%20CompanyName%20=%20"${companyName}"`);
+    //     if (response?.data?.dsVisitors?.ttVisitors?.length > 0) {
+    //       return response.data.dsVisitors.ttVisitors[0].ID;
+    //     }
+    //     throw new Error('Visitor not found');
+    //   } catch (error) {
+    //     console.error('Error fetching visitor ID:', error);
+    //     throw error;
+    //   }
+    // };
+
+    // const visitorId = await getVisitorId(fullName.value, companyName.value);
+
+
+
     const response = await PAS.post('/Visitors', newUser);
     if (response && response.data) {
       const newVisitor = response.data.dsVisitors.ttVisitors[0];
       newVisitorData.value = newVisitor;
       pinCode.value = newVisitor.PINCode;
       emit('pushNewUser', response.data.dsVisitors.ttVisitors);
+      const newVisit = {
+        dsVisitor_Company_Contact: {
+          ttVisitor_Company_Contact: [
+            {
+              VisitorID: newVisitor.ID,
+              CompanyID: selectedCompany.value,
+              ContactID: selectedContactPerson.value.ID,
+              ArrivalDateTime: new Date().toISOString(),
+              VisitPurpose: visitPurpose.value,
+              Inserted: new Date().toISOString()
+            }
+          ]
+        }
+      };
+      console.log('New visit data:', newVisit);
+      const visitResponse = await PAS.post('/Visitor_Company_Contact', newVisit);
+      if (visitResponse && visitResponse.data) {
+        console.log('New visit created successfully:', visitResponse.data);
+      } else {
+        console.error('Unexpected response format for visit creation:', visitResponse);
+      }
     } else {
       newVisitorData.value = null;
       console.error('Neočekivani response format:', response);
@@ -501,7 +581,6 @@ onMounted(async () => {
   }
 });
 
-// Add these after your other functions
 const createNewCompany = async (companyName) => {
   try {
     const newCompany = {
@@ -523,6 +602,8 @@ const createNewCompany = async (companyName) => {
     if (response && response.data) {
       const createdCompany = response.data.dsCompanies.ttCompanies[0];
       companies.value.push(createdCompany);
+      selectedCompany.value = createdCompany;
+
       return createdCompany;
     }
     return null;
@@ -553,6 +634,7 @@ const createNewContact = async (fullName) => {
     if (response && response.data) {
       const createdContact = response.data.dsContacts.ttContacts[0];
       ccontacts.value.push(createdContact);
+      contactPerson.value = createdContact.FullName;
       return createdContact;
     }
     return null;
@@ -572,7 +654,7 @@ const createNewContact = async (fullName) => {
         <div class="input-button-row">
           <input type="text" id="fullName" v-model="fullName" ref="fullNameInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-          }}</button>
+              }}</button>
         </div>
         <SimpleKeyboard id="keyboard" @onChange="onChange" :input="input" :lang="lang" />
         <div class="user-suggestions" v-if="filteredUsers.length">
@@ -589,7 +671,7 @@ const createNewContact = async (fullName) => {
           <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
           <input type="text" id="companyName" v-model="companyName" ref="companyNameInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-          }}</button>
+              }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
         <div class="company-suggestions" v-if="filteredCompanies.length">
@@ -607,7 +689,7 @@ const createNewContact = async (fullName) => {
           <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
           <input type="text" id="visitPurpose" v-model="visitPurpose" ref="visitPurposeInput" readonly required />
           <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-          }}</button>
+              }}</button>
         </div>
         <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang"
           :class="{ 'keyboard-large': props.currentState === 1, 'keyboard-small': props.currentState === 2 }" />
@@ -650,7 +732,7 @@ const createNewContact = async (fullName) => {
           <label id="gdprAgreementCheckboxNote">{{ translations[lang].agreeToGdpr }}</label>
         </div>
         <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-            }}</button>
+        }}</button>
       </div>
 
       <!-- Step 6: Summary -->
