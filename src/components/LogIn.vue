@@ -44,6 +44,17 @@ const emit = defineEmits(['updateView', 'isAdmin']);
 
 const step = ref(1);
 const pinCode = ref('');
+const toastMessage = ref('');
+const showToast = ref(false);
+
+const showToastMessage = (msg) => {
+  toastMessage.value = msg;
+  showToast.value = true;
+  setTimeout(() => {
+    showToast.value = false;
+    toastMessage.value = '';
+  }, 2500);
+};
 
 const nextStep = () => {
   if (step.value < 4) {
@@ -56,6 +67,10 @@ const nextStep = () => {
 const loggedInUser = ref(null);
 const showWelcomeMessage = ref(false);
 const handleLogIn = async () => {
+  if (!pinCode.value || pinCode.value.length < 4) {
+    showToastMessage(props.translations[props.lang]?.enterPin || 'Please enter your PIN.');
+    return;
+  }
   if (pinCode.value === '133747') {
     emit('isAdmin', true);
     emit('updateView', 'adminPanel');
@@ -63,21 +78,23 @@ const handleLogIn = async () => {
   }
   try {
     const response = await PAS.get(`/Visitors?filter=PINCode%20=%20${pinCode.value}`);
-    console.log('Response from server:', response.data);
+    // console.log('Response from server:', response.data);
     const user = response.data.dsVisitors.ttVisitors[0];
     if (user) {
       if (user.Online) {
-        alert(`${user.FullName} is already logged in!`);
+        showToastMessage(`${user.FullName} is already logged in!`);
         step.value = 1;
         return;
       }
       loggedInUser.value = user;
       step.value = 2;
     } else {
-      console.error('Invalid PIN code');
+      showToastMessage(props.translations[props.lang]?.invalidPin || 'Invalid PIN code.');
+      step.value = 1;
     }
   } catch (error) {
-    console.error('Error during login:', error.response?.data || error.message);
+    showToastMessage(props.translations[props.lang]?.loginError || 'Error during login.', error);
+    step.value = 1;
   }
 };
 
@@ -118,7 +135,7 @@ const confirmDetails = async () => {
     );
     let selectedCompanyID = ref(null);
     selectedCompanyID.value = company?.ID;
-    console.log('Selected Company ID:', selectedCompanyID.value);
+    // console.log('Selected Company ID:', selectedCompanyID.value);
 
     // Fetch contact person ID
     const contactResponse = await PAS.get(`/Contacts`);
@@ -127,7 +144,7 @@ const confirmDetails = async () => {
     );
     let selectedContactPersonID = ref(null);
     selectedContactPersonID.value = contactPerson?.ID;
-    console.log('Selected Contact Person ID:', selectedContactPersonID.value);
+    // console.log('Selected Contact Person ID:', selectedContactPersonID.value);
 
     const response = await PAS.put(`/Visitors`, payload);
     if (response && response.data) {
@@ -147,7 +164,7 @@ const confirmDetails = async () => {
       };
       const newVisitResponse = await PAS.post('/Visitor_Company_Contact', newVisit);
       if (newVisitResponse && newVisitResponse.data) {
-        console.log('New visit created successfully:', newVisit);
+        // console.log('New visit created successfully:', newVisit);
       } else {
         console.error('Unexpected response format for visit creation:', newVisitResponse);
       }
@@ -176,7 +193,7 @@ const onChange = (inputValue) => {
 };
 
 onMounted(async () => {
-  console.log('Offline korisnici:', props.offlineUsers);
+  // console.log('Offline korisnici:', props.offlineUsers);
   await fetchOfflineUsers();
 });
 
@@ -191,7 +208,7 @@ onMounted(async () => {
       <input type="text" id="pinCode" v-model="pinCode" readonly maxlength="6"
         :placeholder="translations[lang].placeholderPin" />
       <SimpleKeyboard :input="pinCode" :lang="'num'" @onChange="onChange" />
-      <button id="njekst" @click="() => { handleLogIn(); nextStep(); }">{{ translations[lang].next }}</button>
+      <button id="njekst" @click="() => { handleLogIn(); }">{{ translations[lang].next }}</button>
       <p id="forgot-password" @click="updateDetails" style="cursor: pointer; text-decoration: underline;">
         {{ translations[lang].forgotPassword }}
       </p>
@@ -227,6 +244,11 @@ onMounted(async () => {
       <div class="welcome-popup">
         <h1>{{ translations[lang].welcomeBack }}, {{ loggedInUser?.FullName }}!</h1>
       </div>
+    </div>
+
+    <!-- Toast Message -->
+    <div v-if="showToast" class="toast-message">
+      {{ toastMessage }}
     </div>
   </div>
   <!-- Reuse the SignUp component -->
@@ -437,5 +459,26 @@ onMounted(async () => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Toast Message Styles */
+.toast-message {
+  position: fixed;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 1.5rem 3rem;
+  border-radius: 10px;
+  font-size: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  opacity: 0.95;
+  animation: fadeIn 0.3s;
+}
+
+.toast-message.fade {
+  opacity: 0;
 }
 </style>

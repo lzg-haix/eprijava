@@ -152,9 +152,10 @@ const saveItem = () => {
             wrappedItem = { ...localItem.value };
     }
     if (props.newOrEdit === 'new') {
+        console.log('Creating new item:', wrappedItem);
         emit('newItemCreated', wrappedItem);
     } else {
-        console.log('Updating item:', localItem.value);
+        console.log('Updating item:', wrappedItem);
         emit('updateItem', wrappedItem);
     }
 };

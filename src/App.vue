@@ -308,7 +308,7 @@ onUnmounted(() => {
   color: #2c3e50;
   border: none;
   font-size: 2.5rem;
-  border-radius: 0.2em;
+  border-radius: 0.1em;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -328,7 +328,7 @@ onUnmounted(() => {
   padding-bottom: 0.1em;
   z-index: 2;
   box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.2);
-  border-radius: 0 0 0.2em 0.2em;
+  /* border-radius: 0 0 0.2em 0.2em; */
 }
 
 .language-buttons button:disabled,
@@ -344,7 +344,7 @@ onUnmounted(() => {
   margin: auto;
   width: 96vw;
   height: 87vh;
-  border-radius: 10px;
+  border-radius: 2px;
 }
 
 .background-wrapper {

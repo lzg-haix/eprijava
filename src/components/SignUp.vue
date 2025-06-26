@@ -257,41 +257,62 @@ const selectContactPerson = (person) => {
   console.log('Odabrana kontakt osoba:', selectedContactPerson.value); // ispiši u konzolu
 };
 
-// Function to select a user from the suggestions
-const selectUser = (user) => {
-  fullName.value = user.FullName; // Autofill the full name
-  input.value = user.FullName; // Sync with the virtual keyboard
-  filteredUsers.value = []; // Clear the suggestions
+let returningUser = ref(null);
+
+const selectUser = async (user) => {
+  returningUser.value = user;
+  fullName.value = user.FullName;
+  input.value = user.FullName;
+  filteredUsers.value = [];
+  gdprAgreement.value = user.GDPRAgreement === true;
+
+
+  visitPurpose.value = user.VisitPurpose || '';
+  contactPerson.value = user.ContactPerson || '';
+
+
+  if (user.ContactPerson && ccontacts.value.length) {
+    const foundContact = ccontacts.value.find(c => c.FullName === user.ContactPerson);
+    if (foundContact) selectedContactPerson.value = foundContact;
+  }
+
+  if (gdprAgreement.value) {
+    step.value = 3;
+    await nextTick();
+    focusInput();
+    input.value = visitPurpose.value;
+  }
 };
 
-// DEFINICIJE
-const step = ref(1) // trenutni korak
-const fullName = ref('') // ime i prezime
-const companyName = ref('') // naziv tvrtke
-const visitPurpose = ref('') // namjena posjeta
-const contactPerson = ref('') // kontakt osoba
-const gdprAgreement = ref(false) // suglasnost s GDPR-om
-const pinCode = ref('') // generirani pin kod
-const filteredContactPersons = ref([]) // array za filtrirane kontakt osobe
-const filteredCompanies = ref([]); // array za filtrirane tvrtke
-const selectedCompany = ref(''); // trenutno odabrana tvrtka
-const filteredVisitPurposes = ref([]) // array za filtrirane namjene posjeta
-const filteredUsers = ref([]); // Array for filtered offline users
-const fullNameInput = ref(null) // referenca na input za ime i prezime
-const companyNameInput = ref(null) // referenca na input za naziv tvrtke
-const visitPurposeInput = ref(null) // referenca na input za namjenu posjeta
-const contactPersonInput = ref(null)// referenca na input za kontakt osobu
-const gdprAgreementInput = ref(null) // referenca na input za suglasnost s GDPR-om
-const skipStepTwo = ref(false) // preskoči korak 2 ako je u pitanju dodatan gost iz iste tvrtke
-let debounceTimeout // debounce timeout za filtriranje
-const newVisitorData = ref(null); // Add this near your other refs
+const step = ref(1)
+const fullName = ref('')
+const companyName = ref('')
+const visitPurpose = ref('')
+const contactPerson = ref('')
+const gdprAgreement = ref(false)
+const pinCode = ref('')
+const filteredContactPersons = ref([])
+const filteredCompanies = ref([]);
+const selectedCompany = ref('');
+const filteredVisitPurposes = ref([])
+const filteredUsers = ref([]);
+const fullNameInput = ref(null)
+const companyNameInput = ref(null)
+const visitPurposeInput = ref(null)
+const contactPersonInput = ref(null)
+const gdprAgreementInput = ref(null)
+const skipStepTwo = ref(false)
+let debounceTimeout
+const newVisitorData = ref(null);
+const oldPINCode = ref(null);
 
 // Add this helper function to fetch CompanyID
 const getCompanyId = async (companyName) => {
   try { //'/Languages?filter=Active%20=%20yes'
-    const response = await PAS.get(`/Companies?filter=Name%20= "${companyName}"`);
+    // console.log('Fetching CompanyID for:', companyName);
+    const response = await PAS.get(`/Companies?filter=Name%20=%20"${companyName}"`);
     if (response?.data?.dsCompanies?.ttCompanies?.length > 0) {
-      console.log('Company found:', response);
+      // console.log('Company found:', response);
       return response.data.dsCompanies.ttCompanies[0].ID;
     }
     throw new Error('Company not found');
@@ -307,11 +328,11 @@ const finalizeLogIn = async () => {
       console.error('No logged-in user found.');
       return;
     }
-
+    // console.log('Finalizing login for user:', props.loggedInUser);
     // Fetch CompanyID first
     const companyId = await getCompanyId(props.loggedInUser.CompanyName);
-    console.log('Fetched CompanyID:', companyId);
-
+    // console.log('Fetched CompanyID:', companyId);
+    console.log('old password', props.loggedInUser.PINCode);
     // Update visitor record
     const visitorPayload = {
       dsVisitors: {
@@ -319,17 +340,17 @@ const finalizeLogIn = async () => {
           {
             ID: props.loggedInUser.ID,
             Online: true,
-            VisitPurpose: visitPurpose.value || '',
-            ContactPerson: contactPerson.value || '',
-            PINCode: props.loggedInUser.PINCode || '',
-            FullName: props.loggedInUser.FullName || '',
-            CompanyName: props.loggedInUser.CompanyName || '',
+            VisitPurpose: visitPurpose.value,
+            ContactPerson: contactPerson.value,
+            PINCode: props.loggedInUser.PINCode,
+            FullName: props.loggedInUser.FullName,
+            CompanyName: props.loggedInUser.CompanyName,
             GDPRAgreement: props.loggedInUser.GDPRAgreement,
             Active: props.loggedInUser.Active || true,
             Inserted: props.loggedInUser.Inserted,
             Updated: new Date().toISOString(),
             UpdateUser: 'user/login',
-            InsertUser: props.loggedInUser.InsertUser || '',
+            InsertUser: props.loggedInUser.InsertUser,
           }
         ]
       },
@@ -360,17 +381,17 @@ const finalizeLogIn = async () => {
     if (!visitorResponse || !visitorResponse.data) {
       throw new Error('Failed to update visitor');
     }
-    console.log('visit log data:', visitPayload);
+    // console.log('visit log data:', visitPayload);
     // Create visit record
     const visitResponse = await PAS.post('/Visitor_Company_Contact', visitPayload);
     if (!visitResponse || !visitResponse.data) {
       throw new Error('Failed to create visit record');
     }
 
-    console.log('Login successful:', {
-      visitor: visitorResponse.data,
-      visit: visitResponse.data
-    });
+    // console.log('Login successful:', {
+    //   visitor: visitorResponse.data,
+    //   visit: visitResponse.data
+    // });
 
     props.goToMainPage();
   } catch (error) {
@@ -386,7 +407,6 @@ const nextStep = async () => {
       finalizeLogIn();
     }
   } else {
-    // For company step
     if (step.value === 2) {
       const companyExists = companies.value.some(
         c => c.Name.toLowerCase() === companyName.value.toLowerCase()
@@ -399,8 +419,6 @@ const nextStep = async () => {
         }
       }
     }
-
-    // For contact person step
     if (step.value === 4) {
       const contactExists = ccontacts.value.some(
         c => c.FullName.toLowerCase() === contactPerson.value.toLowerCase()
@@ -426,6 +444,31 @@ const nextStep = async () => {
     }
     if (step.value < 5) {
       step.value++;
+      if (step.value === 5 && gdprAgreement.value) {
+        let userCompany = null;
+        try {
+          const response = await PAS.get(`/Companies?filter=Name%20=%20"${returningUser.value.CompanyName}"`);
+          if (response?.data?.dsCompanies?.ttCompanies?.length > 0) {
+            userCompany = response.data.dsCompanies.ttCompanies;
+            companyName.value = userCompany[0].Name;
+          }
+        } catch (error) {
+          console.error('Error fetching company by name:', error);
+        }
+        if (userCompany) {
+          selectedCompany.value = userCompany[0].ID;
+        }
+        step.value = 6;
+        await nextTick();
+        focusInput();
+        if (returningUser.value && returningUser.value.GDPRAgreement) {
+          await handleExistingUserSignUp();
+        } else {
+          await handleSignUp();
+        }
+        input.value = '';
+        return;
+      }
       if (step.value === 2 && skipStepTwo.value === true) {
         step.value++;
       }
@@ -437,13 +480,10 @@ const nextStep = async () => {
         skipStepTwo.value = true;
         step.value = 1;
         fullName.value = '';
-        // visitPurpose.value = '';
-        // contactPerson.value = '';
         gdprAgreement.value = false;
         additionalVisitorBool.value = false;
       } else {
         step.value = 7;
-
         setTimeout(() => {
           companyName.value = '';
           selectedCompany.value = '';
@@ -451,6 +491,57 @@ const nextStep = async () => {
         }, 5000);
       }
     }
+  }
+};
+
+const handleExistingUserSignUp = async () => {
+  try {
+    const visitorPayload = {
+      dsVisitors: {
+        ttVisitors: [
+          {
+            ID: returningUser.value.ID,
+            FullName: fullName.value,
+            CompanyName: companyName.value,
+            VisitPurpose: visitPurpose.value,
+            ContactPerson: contactPerson.value,
+            GDPRAgreement: true,
+            InsertUser: returningUser.value.InsertUser || "user",
+            UpdateUser: "user/signup",
+            Online: true,
+            PINCode: returningUser.value.PINCode,
+            Active: true,
+            Inserted: returningUser.value.Inserted,
+            Updated: new Date().toISOString()
+          }
+        ]
+      }
+    };
+
+    const visitorResponse = await PAS.put('/Visitors', visitorPayload);
+    if (!visitorResponse || !visitorResponse.data) {
+      throw new Error('Failed to update visitor');
+    }
+
+    const newVisit = {
+      dsVisitor_Company_Contact: {
+        ttVisitor_Company_Contact: [
+          {
+            VisitorID: returningUser.value.ID,
+            CompanyID: selectedCompany.value,
+            ContactID: selectedContactPerson.value.ID,
+            ArrivalDateTime: new Date().toISOString(),
+            VisitPurpose: visitPurpose.value,
+            Inserted: new Date().toISOString()
+          }
+        ]
+      }
+    };
+    await PAS.post('/Visitor_Company_Contact', newVisit);
+
+    props.goToMainPage();
+  } catch (error) {
+    console.error('Error during existing user sign up:', error.response?.data || error.message);
   }
 };
 
@@ -466,7 +557,6 @@ const stepBack = async () => {
 let additionalVisitorBool = ref(false);
 const setAdditionalVisitor = (bool) => {
   additionalVisitorBool.value = bool;
-  console.log('Additional visitor:', additionalVisitorBool.value)
   nextStep();
 }
 
@@ -482,34 +572,16 @@ const handleSignUp = async () => {
             ContactPerson: contactPerson.value,
             GDPRAgreement: gdprAgreement.value,
             InsertUser: "user",
-            Online: true
+            Online: true,
           }
         ]
       }
     };
 
-    // const getVisitorId = async (fullName, companyName) => {
-    //   try {
-    //     const response = await PAS.get(`/Visitors?filter=FullName%20=%20"${fullName}"%20AND%20CompanyName%20=%20"${companyName}"`);
-    //     if (response?.data?.dsVisitors?.ttVisitors?.length > 0) {
-    //       return response.data.dsVisitors.ttVisitors[0].ID;
-    //     }
-    //     throw new Error('Visitor not found');
-    //   } catch (error) {
-    //     console.error('Error fetching visitor ID:', error);
-    //     throw error;
-    //   }
-    // };
-
-    // const visitorId = await getVisitorId(fullName.value, companyName.value);
-
-
-
     const response = await PAS.post('/Visitors', newUser);
     if (response && response.data) {
       const newVisitor = response.data.dsVisitors.ttVisitors[0];
       newVisitorData.value = newVisitor;
-      pinCode.value = newVisitor.PINCode;
       emit('pushNewUser', response.data.dsVisitors.ttVisitors);
       const newVisit = {
         dsVisitor_Company_Contact: {
@@ -525,10 +597,9 @@ const handleSignUp = async () => {
           ]
         }
       };
-      console.log('New visit data:', newVisit);
       const visitResponse = await PAS.post('/Visitor_Company_Contact', newVisit);
       if (visitResponse && visitResponse.data) {
-        console.log('New visit created successfully:', visitResponse.data);
+        // console.log('New visit created successfully:', visitResponse.data);
       } else {
         console.error('Unexpected response format for visit creation:', visitResponse);
       }
@@ -603,7 +674,6 @@ const createNewCompany = async (companyName) => {
       const createdCompany = response.data.dsCompanies.ttCompanies[0];
       companies.value.push(createdCompany);
       selectedCompany.value = createdCompany;
-
       return createdCompany;
     }
     return null;
@@ -911,7 +981,7 @@ button {
 
 ::v-deep(.hg-button) {
   background-color: #ffffff;
-  color: #2c3e50;
+  color: #060707;
   font-size: 2rem;
   border: none;
   border-radius: 5px;
@@ -975,8 +1045,8 @@ button {
   padding: 0.5rem;
   font-size: 2rem;
   font-weight: bold;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
+  border: 1px solid #000000;
+  /* border-radius: 0.5rem; */
   color: black;
 }
 
@@ -985,10 +1055,10 @@ button {
   padding: 0.9rem 2rem;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #2c3e50;
-  background-color: #fff;
+  color: #080808;
+  background-color: #000000;
   border: none;
-  border-radius: 0.5rem;
+  /* border-radius: 0.5rem; */
   cursor: pointer;
   transition: background-color 0.2s ease;
   width: 7em;

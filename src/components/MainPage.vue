@@ -117,7 +117,7 @@ h3 {
 }
 
 .greetings {
-  margin-top: 1.2em;
+  margin-top: 1em;
 }
 
 .greetings h1,
@@ -129,18 +129,18 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10em;
-  margin-top: 5.5rem;
+  gap: 11.5em;
+  margin-top: 3rem;
 }
 
 .button-container button {
   padding: 3rem 2rem;
-  font-size: 2rem;
+  font-size: 3rem;
   cursor: pointer;
   border: none;
-  border-radius: 10px;
+  border-radius: 3px;
   background-color: #ffffff;
-  color: #2c3e50;
+  color: #000000;
   width: 25rem;
 }
 

@@ -1,4 +1,5 @@
 <script setup>
+import { onMounted } from 'vue';
 import { PAS } from '@/utils/pas-util';
 if (!PAS) {
     console.error('PAS instanca nije dostupna. Provjerite postavke u utils/pas-util.js ili postavke OEPAS servera.');
@@ -21,6 +22,7 @@ const emit = defineEmits(['row-deleted', 'hideDeleteDialog']);
 // šalje emit event prema DataTable komponenti koja proslijeđuje taj emit prema AdminPanelu u kojem se poziva funkcija za brisanje sloga
 const deleteRow = async () => {
     try {
+
         emit('row-deleted');
     } catch (error) {
         console.error('Error emitting row-deleted:', error);
@@ -35,6 +37,12 @@ const hideDeleteDialog = async () => {
         console.error('Error emitting hideDeleteDialog:', error);
     };
 };
+
+onMounted(() => {
+    // Ovdje možete dodati logiku koja se izvršava prilikom montiranja komponente
+    console.log('DeleteDialog komponenta je montirana.');
+    console.log('Brisanje retka:', props.itemToDelete);
+});
 </script>
 
 <template>

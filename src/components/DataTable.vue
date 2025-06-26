@@ -203,13 +203,13 @@ const confirmDelete = (item) => {
 
 const deleteRow = async () => {
     try {
-        const itemID = itemToDelete.value.ID;
-        console.log('Deleting item with ID:', objectToDelete.value);
-        //await PAS.delete(`/${props.currentlyDisplaying}`, objectToDelete.value); // brisanje zapisa preko API-ja
+        const getItem = await PAS.get(`/${props.currentlyDisplaying}?filter=ID%20=%20${itemToDelete.value.ID}`);
+        console.log('Item to delete:', getItem.data);
+        await PAS.delete(`/${props.currentlyDisplaying}`, getItem.data); // brisanje zapisa preko API-ja
 
-        emit('row-deleted', itemID); // emit event za obavijest o brisanju
+        emit('row-deleted', itemToDelete.value.ID); // emit event za obavijest o brisanju
 
-        console.log(`Item with ID ${itemID} deleted successfully.`);
+        console.log(`Item with ID ${itemToDelete.value.ID} deleted successfully.`);
     } catch (error) {
         console.error('Error deleting user:', error);
     } finally {
@@ -233,8 +233,8 @@ const handleUpdateItem = async (updatedItem) => {
 const handleNewItem = async (newlyCreatedItem) => {
     try {
         // Find the last used user ID and increment it for the new user
-        const lastItemId = props.data.length > 0 ? Math.max(...props.data.map(item => item.id)) : 0;
-        newlyCreatedItem.id = lastItemId + 1;
+        // const lastItemId = props.data.length > 0 ? Math.max(...props.data.map(item => item.id)) : 0;
+        // newlyCreatedItem.id = lastItemId + 1;
         await PAS.post(`/${props.currentlyDisplaying}`, newlyCreatedItem);
         showInfoDialog.value = false;
         emit('newItemCreated', newlyCreatedItem); // emit event za obavijest o izmjeni

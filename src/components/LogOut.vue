@@ -21,7 +21,7 @@ const fetchLoggedInUsers = async () => {
   try {
     const response = await PAS.get('/Visitors?filter=Online%20=%20Yes');
     loggedInUsers.value = response.data.dsVisitors.ttVisitors;
-    console.log('Logged-in users:', loggedInUsers.value);
+    // console.log('Logged-in users:', loggedInUsers.value);
   } catch (error) {
     console.error('Error fetching logged-in users:', error);
   }
@@ -29,25 +29,26 @@ const fetchLoggedInUsers = async () => {
 
 const updateVisitorLog = async (user) => {
   try {
-    // Fetch company ID
     const companyResponse = await PAS.get(`/Companies`);
     const company = companyResponse.data.dsCompanies.ttCompanies.find(
       c => c.Name === user.CompanyName
     );
     let selectedCompanyID = company?.ID;
-    console.log('Selected company ID:', selectedCompanyID);
-    // Fetch contact person ID
     const contactResponse = await PAS.get(`/Contacts`);
     const contactPerson = contactResponse.data.dsContacts.ttContacts.find(
       c => c.FullName === user.ContactPerson
     );
     let selectedContactID = contactPerson?.ID;
-
-    // Update the visitor log with departure time
+    // Fetch the last log record for this visitor, company, and contact
+    const logResponse = await PAS.get(
+      `/Visitor_Company_Contact?filter=VisitorID%20=%20${user.ID}%20AND%20CompanyID%20=%20${selectedCompanyID}%20AND%20ContactID%20=%20${selectedContactID}&orderby=DepartureDateTime%20desc&limit=1`
+    );
+    const lastLog = logResponse.data.dsVisitor_Company_Contact?.ttVisitor_Company_Contact?.[0];
     const visitLogPayload = {
       dsVisitor_Company_Contact: {
         ttVisitor_Company_Contact: [
           {
+            ID: lastLog?.ID,
             VisitorID: user.ID,
             CompanyID: selectedCompanyID,
             ContactID: selectedContactID,
@@ -58,7 +59,10 @@ const updateVisitorLog = async (user) => {
         ]
       }
     };
-    console.log('Updating visitor log with payload:', visitLogPayload);
+
+
+
+    // console.log('Updating visitor log with payload:', visitLogPayload);
     await PAS.put('/Visitor_Company_Contact', visitLogPayload);
   } catch (error) {
     console.error('Error updating visitor log:', error);
@@ -68,7 +72,6 @@ const updateVisitorLog = async (user) => {
 
 const logoutUserById = async (user) => {
   try {
-    await updateVisitorLog(user);
     const payload = {
       dsVisitors: {
         ttVisitors: [
@@ -91,8 +94,8 @@ const logoutUserById = async (user) => {
       }
     };
     await PAS.put(`/Visitors`, payload);
+    await updateVisitorLog(user);
     fetchLoggedInUsers();
-    // Show goodbye overlay
     goodbyeName.value = user.FullName;
     showGoodbyeMessage.value = true;
     setTimeout(() => {
@@ -111,9 +114,11 @@ const logoutUserById = async (user) => {
 let user;
 const logoutUserByPin = async () => {
   try {
+    // console.log('Logging out user by PIN:', pinCode.value);
     const response = await PAS.get(`/Visitors?filter=PINCode%20=%20${pinCode.value}`);
+    // console.log('Response from server:', response);
     user = response.data.dsVisitors.ttVisitors[0];
-    user.Online = true;
+    // user.Online = true;
     if (user && user.Online) {
       const confirmLogout = confirm(`Are you sure you want to log out ${user.FullName}?`);
       if (confirmLogout) {
@@ -136,10 +141,10 @@ const handleNameInput = () => {
 
 const selectUser = (user) => {
   selectedUser.value = user;
-  console.log(`Selected user: ${user}`);
+  // console.log(`Selected user: ${user}`);
   const confirmLogout = confirm(`Are you sure you want to log out ${user.FullName}?`);
   if (confirmLogout) {
-    console.log(user)
+    // console.log(user)
     logoutUserById(user);
     fullName.value = '';
     suggestedUsers.value = [];
