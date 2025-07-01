@@ -262,12 +262,26 @@ const addRow = async () => {
 // pretraživanje
 const searchQuery = ref('');
 const filteredData = computed(() => {
-    if (!searchQuery.value) {
-        return props.data; // ako je upit prazan, vrati sve podatke
+    let data = props.data;
+
+    // Sort only for Visitors
+    if (props.currentlyDisplaying === 'Visitors') {
+        data = [...data].sort((a, b) => {
+            // Online users first
+            if (a.Online === b.Online) {
+                // Then by FullName (case-insensitive)
+                return a.FullName.localeCompare(b.FullName, undefined, { sensitivity: 'base' });
+            }
+            return b.Online - a.Online; // true > false
+        });
     }
-    return props.data.filter((item) => {
+
+    if (!searchQuery.value) {
+        return data;
+    }
+    return data.filter((item) => {
         return fields.value.some((field) =>
-            String(item[field]).toLowerCase().includes(searchQuery.value.toLowerCase()) // pretražuje sve polja, case insensitive
+            String(item[field]).toLowerCase().includes(searchQuery.value.toLowerCase())
         );
     });
 });
@@ -280,7 +294,12 @@ const filteredData = computed(() => {
             <div class="add-user">
                 <i :class="getCreateIcon" @click="addRow"></i>
             </div>
-            <input type="text" id="search-bar" placeholder="Pretraži..." v-model="searchQuery" />
+            <div class="toolbar-right">
+                <input type="text" id="search-bar" placeholder="Pretraži..." v-model="searchQuery" />
+                <span v-if="currentlyDisplaying === 'Visitors'" class="legend">
+                    <span class="legend-color"></span> Online korisnik
+                </span>
+            </div>
         </div>
         <div class="table-scroll">
             <table>
@@ -293,7 +312,15 @@ const filteredData = computed(() => {
 
                 <tbody class="table-body">
                     <tr class="table-row" v-for="item in filteredData" :key="item.ID">
-                        <td class="td-cell" v-for="field in fields" :key="field">{{ item[field] }}</td>
+                        <td class="td-cell" v-for="field in fields" :key="field">
+                            <span v-if="props.currentlyDisplaying === 'Visitors' && field === 'FullName' && item.Online"
+                                class="online-name">
+                                {{ item[field] }}
+                            </span>
+                            <template v-else>
+                                {{ item[field] }}
+                            </template>
+                        </td>
                         <td class="td-button-cell">
                             <i :class="getEditIcon" @click="editRow(item)"></i>
                             <i :class="getDeleteIcon" @click="confirmDelete(item)"></i>
@@ -324,6 +351,12 @@ const filteredData = computed(() => {
     flex-direction: row-reverse;
     justify-content: space-between;
     margin-bottom: 1em;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1em;
 }
 
 #search-bar {
@@ -401,5 +434,36 @@ thead th {
     color: white;
     box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.15);
     border-top: none;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    font-size: 0.95em;
+    margin-left: 1em;
+    color: #222;
+    background: #f6f6f6;
+    /* border-radius: 0.5em; */
+    padding: 0.2em 0.7em;
+    border: 1px solid #bdbdbd;
+}
+
+.legend-color {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    background-color: rgba(9, 172, 9, 0.788);
+    border-radius: 0.3em;
+    margin-right: 0.5em;
+    border: 1px solid #0a7a0a;
+    vertical-align: middle;
+}
+
+.online-name {
+    background-color: rgba(9, 172, 9, 0.788);
+    padding: 0.2em 0.5em;
+    border-radius: 0.3em;
+    color: #fff;
+    font-weight: bold;
 }
 </style>

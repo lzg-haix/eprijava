@@ -86,17 +86,22 @@ const handleAdminStatus = (status) => {
 
 <template>
   <div class="greetings">
+
     <div class="button-container" v-if="currentView === 0">
-      <button @click="showView(1, 'signUp')">{{ translations[lang]?.signUp }}</button>
-      <button @click="showView(2, 'signIn')">{{ translations[lang]?.signIn }}</button>
-      <button @click="showView(3, 'logOut')">{{ translations[lang]?.logOut }}</button>
+
+      <div class="batns">
+        <button class @click="showView(1, 'signUp')">{{ translations[lang]?.signIn }}</button>
+        <button class="pin-login" @click="showView(2, 'signIn')">{{ translations[lang]?.PINLogin }}</button>
+        <button @click="showView(3, 'logOut')">{{ translations[lang]?.logOut }}</button>
+      </div>
       <!-- <button @click="showView(4, 'adminPanel')">admin</button> -->
     </div>
     <SignUp v-else-if="currentView === 1" :lang="lang" :allUsers="allUsers" :translations="translations"
       :goToMainPage="() => showView(0, 'welcome')" :currentState="1" @pushNewUser="getUsers()" />
     <LogIn v-else-if="currentView === 2" :lang="lang" :offlineUsers="offlineUsers" :translations="translations"
       :goToMainPage="() => showView(0, 'welcome')" @isAdmin="handleAdminStatus" />
-    <LogOut v-else-if="currentView === 3" />
+    <LogOut v-else-if="currentView === 3" :lang="lang" :translations="translations"
+      :goToMainPage="() => showView(0, 'welcome')" />
     <AdminPanel v-else-if="currentView === 4" :translations="translations" />
   </div>
 
@@ -104,6 +109,16 @@ const handleAdminStatus = (status) => {
 </template>
 
 <style scoped>
+/* .pin-login {
+  position: relative;
+  left: 90%;
+  cursor: pointer;
+  width: 10rem;
+  height: 4rem;
+  font-size: 1.5rem;
+  border: 1px solid #000000;
+} */
+
 h1 {
   font-weight: 500;
   font-size: 2.6rem;
@@ -117,7 +132,7 @@ h3 {
 }
 
 .greetings {
-  margin-top: 1em;
+  margin-top: 1.5em;
 }
 
 .greetings h1,
@@ -130,10 +145,36 @@ h3 {
   flex-direction: column;
   align-items: center;
   gap: 11.5em;
-  margin-top: 3rem;
+  position: relative;
+  width: 100%;
 }
 
-.button-container button {
+.batns {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 7rem;
+  gap: 7.5rem;
+  position: relative;
+  width: 100%;
+}
+
+.batns .pin-login {
+  position: relative;
+  bottom: 3em;
+}
+
+.pin-login {
+  cursor: pointer;
+  width: 20rem;
+  height: 6rem;
+  font-size: 1.5rem;
+  border: 1px solid #000000;
+  background-color: #fff;
+  z-index: 1;
+}
+
+.button-container button:not(.pin-login) {
   padding: 3rem 2rem;
   font-size: 3rem;
   cursor: pointer;

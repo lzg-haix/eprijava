@@ -112,6 +112,16 @@ export default {
                     "0 {bksp}"
                 ]
             },
+        },
+        displays: {
+            en: { "{bksp}": "Delete", "{shift}": "shift", "{space}": " " },
+            hr: { "{bksp}": "Obriši", "{shift}": "shift", "{space}": " " },
+            de: { "{bksp}": "Löschen", "{shift}": "shift", "{space}": " " },
+            fr: { "{bksp}": "Suppr.", "{shift}": "shift", "{space}": " " },
+            it: { "{bksp}": "Cancella", "{shift}": "shift", "{space}": " " },
+            es: { "{bksp}": "Borrar", "{shift}": "shift", "{space}": " " },
+            nl: { "{bksp}": "Verwijder", "{shift}": "shift", "{space}": " " },
+            num: { "{bksp}": "Delete", "{shift}": "shift", "{space}": " " }
         }
     }),
     mounted() {
@@ -120,10 +130,12 @@ export default {
     methods: {
         initKeyboard() {
             const layout = this.layouts[this.lang] || this.layouts.en;
+            const display = this.displays[this.lang] || this.displays.en;
             this.keyboard = new Keyboard(this.keyboardClass, {
                 onChange: this.onChange,
                 onKeyPress: this.onKeyPress,
-                layout: layout
+                layout: layout,
+                display: display
             });
         },
         onChange(input) {
@@ -135,7 +147,6 @@ export default {
             if (button === "{shift}" || button === "{lock}") {
                 this.handleShift();
             } else {
-                // Only revert to default layout if currently in shift mode and the button is not a special key
                 if (this.keyboard.options.layoutName === "shift" && !button.startsWith("{")) {
                     this.keyboard.setOptions({
                         layoutName: "default"
@@ -143,11 +154,10 @@ export default {
                 }
             }
 
-            // Handle backspace functionality
             if (button === "{bksp}") {
                 const currentInput = this.keyboard.getInput();
-                this.keyboard.setInput(currentInput.slice(0, -1)); // Remove the last character
-                this.$emit("onChange", this.keyboard.getInput()); // Emit the updated input
+                this.keyboard.setInput(currentInput.slice(0, -1));
+                this.$emit("onChange", this.keyboard.getInput());
             }
         },
         handleShift() {
@@ -164,10 +174,11 @@ export default {
             this.keyboard.setInput(input);
         },
         lang(newLang) {
-            // Reinitialize the keyboard when the language changes
             const layout = this.layouts[newLang] || this.layouts.en;
+            const display = this.displays[newLang] || this.displays.en;
             this.keyboard.setOptions({
-                layout: layout
+                layout: layout,
+                display: display
             });
         }
     }

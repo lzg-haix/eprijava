@@ -124,12 +124,30 @@ const handleNewRowCreated = () => {
             <button @click="switchTab('Contacts')" :class="{ active: activeTab === 'Contacts' }">Kontakt osobe</button>
             <button @click="switchTab('Translations')"
                 :class="{ active: activeTab === 'Translations' }">Prijevodi</button>
+            <button @click="switchTab('Options')" :class="{ active: activeTab === 'Options' }">Opcije</button>
         </header>
 
         <div class="tab-content">
             <LanguageTable v-if="activeTab === 'Translations'" />
-            <DataTable v-else :data="currentData" :displayDetails="currentColumns" :currently-displaying="activeTab"
-                @newItemCreated="handleNewRowCreated" @row-deleted="handleRowDeleted" @updateItem="handleRowDeleted" />
+            <DataTable v-else-if="activeTab !== 'Options'" :data="currentData" :displayDetails="currentColumns"
+                :currently-displaying="activeTab" @newItemCreated="handleNewRowCreated" @row-deleted="handleRowDeleted"
+                @updateItem="handleRowDeleted" />
+        </div>
+
+        <div class="options-menu" v-if="activeTab === 'Options'">
+            <h2>Opcije</h2>
+            <p>Ovdje možete upravljati opcijama sustava.</p>
+            <label style="display: flex; align-items: center; gap: 0.5em;">
+                <input type="checkbox" v-model="allowHardwareKeyboard" />
+                Dopusti korištenje hardverske tipkovnice
+                <span style="margin-left: 2em;">
+                    Timeout (sekundi):
+                    <input type="number" v-model.number="timeoutSeconds" min="5" max="600"
+                        style="width: 5em; margin-left: 0.5em;" />
+                    Nakon ovoliko sekundi, aplikacija će se automatski osvježiti.
+                </span>
+            </label>
+
         </div>
     </div>
 

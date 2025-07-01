@@ -101,18 +101,6 @@ const hideInfoDialog = async () => {
     };
 };
 
-// // vatrodojava - ispis i pregled
-// const fOnlineUsers = ref([]);
-// const fGetOnlineUsers = async () => {
-//     try {
-//         const response = await oepas_dev2.get('/Visitors?filter=online%20=%20true');
-//         fOnlineUsers.value = response.data.dsVisitors.ttVisitors;
-//         // console.log('Online users:', fOnlineUsers.value);
-//     } catch (error) {
-//         console.error('Error fetching online users:', error);
-//     }
-// };
-
 const localItem = ref(props.newOrEdit === 'new' ? {} : { ...props.itemToEdit });
 const getGeneratedPIN = async () => {
     try {
@@ -226,7 +214,7 @@ watch(
                         <div v-else-if="field.field === 'EntryDescription'">
                             <textarea :id="field.field" v-model="localItem[field.field]" @input="autoResize($event)"
                                 rows="1"
-                                style="resize: none; overflow: hidden; width: 20em; border-radius: 0.5em; text-align: left;"></textarea>
+                                style="resize: none; overflow: hidden; width: 20em; text-align: left;"></textarea>
                         </div>
                         <div v-else-if="field.field === 'PINCode'">
                             <input :id="field.field" v-model="localItem[field.field]" type="text" readonly />
@@ -252,7 +240,7 @@ watch(
                         <div v-else-if="field.field === 'EntryDescription' | field.field === 'LangValue'">
                             <textarea class="description" :id="field.field" v-model="localItem[field.field]"
                                 @input="autoResize($event)" rows="1"
-                                style="resize: none; overflow: hidden; width: 20em; border-radius: 0.5em; text-align: left;"></textarea>
+                                style="resize: none; overflow: hidden; width: 20em; height: 2em; text-align: left;"></textarea>
                         </div>
                         <div v-else-if="field.field === 'PINCode'">
                             <input :id="field.field" v-model="localItem[field.field]" type="text" readonly />
@@ -303,18 +291,26 @@ watch(
 input {
     width: 20em;
     text-align: center;
-    border-radius: 0.5em;
+    height: 2rem;
     border: 1px solid black;
+    font-size: 1em;
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-radius: 0;
+    border: 2px solid #000000;
 }
 
 .description {
     width: 20em;
     text-align: left;
     border: 1px solid black;
-    border-radius: 0.5em;
     overflow: hidden;
     color: black;
     font-family: Arial, sans-serif;
+    font-size: 1em;
 }
 
 .dialog-actions {
@@ -327,7 +323,6 @@ input {
     background-color: #0492D2;
     color: black;
     border: 1px solid #000;
-    border-radius: 4px;
     cursor: pointer;
     text-align: center;
     width: 5em;
@@ -338,7 +333,6 @@ input {
     background-color: rgba(255, 30, 30, 0.842);
     color: black;
     border: 1px solid #000;
-    border-radius: 4px;
     cursor: pointer;
     text-align: center;
     width: 5em;

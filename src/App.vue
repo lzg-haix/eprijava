@@ -256,7 +256,7 @@ onUnmounted(() => {
   left: 1.5em;
   z-index: 10000;
   transition: opacity 0.3s ease;
-  gap: 1em;
+  gap: 0.1em;
 }
 
 .home-button-hidden {
@@ -277,6 +277,14 @@ onUnmounted(() => {
 
 .clock-evacuation {
   opacity: 0;
+}
+
+#evacuation {
+  cursor: pointer;
+  color: #2c3e50;
+  /* font-size: 2.5em; */
+  position: absolute;
+  left: 10em;
 }
 
 .page-title {
@@ -328,7 +336,6 @@ onUnmounted(() => {
   padding-bottom: 0.1em;
   z-index: 2;
   box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.2);
-  /* border-radius: 0 0 0.2em 0.2em; */
 }
 
 .language-buttons button:disabled,

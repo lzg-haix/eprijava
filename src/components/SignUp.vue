@@ -355,7 +355,7 @@ const finalizeLogIn = async () => {
         ]
       },
     };
-
+    PINCodeBrale.value = props.loggedInUser.PINCode;
     // Create visit record with fetched CompanyID
     const visitPayload = {
       dsVisitor_Company_Contact: {
@@ -400,6 +400,35 @@ const finalizeLogIn = async () => {
 };
 
 const nextStep = async () => {
+  // Step 1: Full Name
+  if (step.value === 1 && !fullName.value.trim()) {
+    alert(props.translations[props.lang].fullNameRequired || "Full name is required.");
+    return;
+  }
+
+  // Step 2: Company Name
+  if (step.value === 2 && !companyName.value.trim()) {
+    companyName.value = "Bez tvrtke";
+    selectedCompany.value = 1;
+  }
+
+  // Step 3: Visit Purpose
+  if (step.value === 3 && !visitPurpose.value.trim()) {
+    alert(props.translations[props.lang].visitPurposeRequired || "Visit purpose is required.");
+    return;
+  }
+
+  // Step 4: Contact Person
+  if (step.value === 4 && !contactPerson.value.trim()) {
+    alert(props.translations[props.lang].contactPersonRequired || "Contact person is required.");
+    return;
+  }
+
+  // Step 5: GDPR Agreement
+  if (step.value === 5 && !gdprAgreement.value) {
+    alert(props.translations[props.lang].gdprRequired || "You must agree to GDPR.");
+    return;
+  }
   if (props.currentState === 2) {
     if (step.value === 3) {
       step.value = 4;
@@ -463,11 +492,21 @@ const nextStep = async () => {
         focusInput();
         if (returningUser.value && returningUser.value.GDPRAgreement) {
           await handleExistingUserSignUp();
+          step.value = 6;
+          await nextTick();
+          focusInput();
+          input.value = '';
+          return;
         } else {
           await handleSignUp();
+          if (newVisitorData.value) {
+            step.value = 6;
+            await nextTick();
+            focusInput();
+            input.value = '';
+          }
+          return;
         }
-        input.value = '';
-        return;
       }
       if (step.value === 2 && skipStepTwo.value === true) {
         step.value++;
@@ -494,6 +533,8 @@ const nextStep = async () => {
   }
 };
 
+const PINCodeBrale = ref('');
+
 const handleExistingUserSignUp = async () => {
   try {
     const visitorPayload = {
@@ -517,6 +558,7 @@ const handleExistingUserSignUp = async () => {
         ]
       }
     };
+    PINCodeBrale.value = returningUser.value.PINCode;
 
     const visitorResponse = await PAS.put('/Visitors', visitorPayload);
     if (!visitorResponse || !visitorResponse.data) {
@@ -539,7 +581,7 @@ const handleExistingUserSignUp = async () => {
     };
     await PAS.post('/Visitor_Company_Contact', newVisit);
 
-    props.goToMainPage();
+    // props.goToMainPage();
   } catch (error) {
     console.error('Error during existing user sign up:', error.response?.data || error.message);
   }
@@ -582,6 +624,7 @@ const handleSignUp = async () => {
     if (response && response.data) {
       const newVisitor = response.data.dsVisitors.ttVisitors[0];
       newVisitorData.value = newVisitor;
+      PINCodeBrale.value = newVisitor.PINCode;
       emit('pushNewUser', response.data.dsVisitors.ttVisitors);
       const newVisit = {
         dsVisitor_Company_Contact: {
@@ -713,6 +756,17 @@ const createNewContact = async (fullName) => {
     return null;
   }
 };
+
+function onInvalid(event, message) {
+  event.target.setCustomValidity(message);
+}
+
+function onInputClearValidity(event) {
+  event.target.setCustomValidity('');
+}
+
+// Add this variable to control keyboard usage
+const useKeyboard = ref(true);
 </script>
 
 <template>
@@ -722,14 +776,17 @@ const createNewContact = async (fullName) => {
       <div v-if="step === 1" class="form-group">
         <label class="input-label" for="fullName">{{ translations[lang].fullName }}</label>
         <div class="input-button-row">
-          <input type="text" id="fullName" v-model="fullName" ref="fullNameInput" readonly required />
-          <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-              }}</button>
+          <input type="text" id="fullName" v-model="fullName" ref="fullNameInput" :readonly="useKeyboard" required
+            @input="onInputClearValidity($event); !useKeyboard && onChange($event.target.value)"
+            @invalid="onInvalid($event, translations[lang].emptyFieldToast)" />
+          <button class="confirm-button" type="submit">
+            {{ step < 6 ? translations[lang].next : translations[lang].finish }} </button>
         </div>
-        <SimpleKeyboard id="keyboard" @onChange="onChange" :input="input" :lang="lang" />
+        <SimpleKeyboard v-if="useKeyboard" id="keyboard" @onChange="onChange" :input="input" :lang="lang" />
         <div class="user-suggestions" v-if="filteredUsers.length">
           <div class="user-card" v-for="user in filteredUsers" :key="user.ID" @click="selectUser(user)">
-            {{ user.FullName }}
+            <div class="card-name">{{ user.FullName }}</div>
+            <div class="card-company">{{ user.CompanyName }}</div>
           </div>
         </div>
       </div>
@@ -739,11 +796,13 @@ const createNewContact = async (fullName) => {
         <label class="input-label" for="companyName">{{ translations[lang].companyName }}</label>
         <div class="input-button-row">
           <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
-          <input type="text" id="companyName" v-model="companyName" ref="companyNameInput" readonly required />
-          <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-              }}</button>
+          <input type="text" id="companyName" v-model="companyName" ref="companyNameInput" :readonly="useKeyboard"
+            @input="!useKeyboard && onChange($event.target.value)"
+            :placeholder="translations[lang].placeholderNoCompany" />
+          <button class="confirm-button" type="submit">
+            {{ step < 6 ? translations[lang].next : translations[lang].finish }} </button>
         </div>
-        <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang" />
+        <SimpleKeyboard v-if="useKeyboard" @onChange="onChange" :input="input" :lang="lang" />
         <div class="company-suggestions" v-if="filteredCompanies.length">
           <div class="company-card" v-for="company in filteredCompanies" :key="company.ID"
             @click="selectCompany(company)">
@@ -757,11 +816,13 @@ const createNewContact = async (fullName) => {
         <label class="input-label" for="visitPurpose">{{ translations[lang].visitPurpose }}</label>
         <div class="input-button-row">
           <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
-          <input type="text" id="visitPurpose" v-model="visitPurpose" ref="visitPurposeInput" readonly required />
-          <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-              }}</button>
+          <input type="text" id="visitPurpose" v-model="visitPurpose" ref="visitPurposeInput" :readonly="useKeyboard"
+            required @input="!useKeyboard && onChange($event.target.value)"
+            @invalid="onInvalid($event, translations[lang].emptyFieldToast)" />
+          <button class="confirm-button" type="submit">
+            {{ step < 6 ? translations[lang].next : translations[lang].finish }} </button>
         </div>
-        <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang"
+        <SimpleKeyboard v-if="useKeyboard" @onChange="onChange" :input="input" :lang="lang"
           :class="{ 'keyboard-large': props.currentState === 1, 'keyboard-small': props.currentState === 2 }" />
         <div class="visit-purpose-suggestions" v-if="filteredVisitPurposes.length">
           <div class="visit-purpose-card" v-for="purpose in filteredVisitPurposes" :key="purpose.ID"
@@ -776,11 +837,13 @@ const createNewContact = async (fullName) => {
         <label class="input-label" for="contactPerson">{{ translations[lang].contactPerson }}</label>
         <div class="input-button-row">
           <button class="back-button" @click="stepBack">{{ translations[lang].back }}</button>
-          <input type="text" id="contactPerson" v-model="contactPerson" ref="contactPersonInput" readonly required />
+          <input type="text" id="contactPerson" v-model="contactPerson" ref="contactPersonInput" :readonly="useKeyboard"
+            required @input="!useKeyboard && onChange($event.target.value)"
+            @invalid="onInvalid($event, translations[lang].emptyFieldToast)" />
           <button class="confirm-button" type="submit">
             {{ step < 6 ? translations[lang].next : translations[lang].finish }} </button>
         </div>
-        <SimpleKeyboard @onChange="onChange" :input="input" :lang="lang"
+        <SimpleKeyboard v-if="useKeyboard" @onChange="onChange" :input="input" :lang="lang"
           :class="{ 'keyboard-large': props.currentState === 1, 'keyboard-small': props.currentState === 2 }" />
         <div class="contact-person-suggestions" v-if="filteredContactPersons.length">
           <div class="contact-person-card" v-for="person in filteredContactPersons" :key="person.ID"
@@ -798,11 +861,11 @@ const createNewContact = async (fullName) => {
         </ul>
         <div class="gdpr-agreement">
           <input type="checkbox" id="gdprAgreementCheckbox" v-model="gdprAgreement" ref="gdprAgreementInput" readonly
-            required />
+            required @invalid="onInvalid($event, translations[lang].emptyFieldToast)" />
           <label id="gdprAgreementCheckboxNote">{{ translations[lang].agreeToGdpr }}</label>
         </div>
-        <button class="confirm-button" type="submit">{{ step < 6 ? translations[lang].next : translations[lang].finish
-        }}</button>
+        <button class="confirm-button" type="submit">
+          {{ step < 6 ? translations[lang].next : translations[lang].finish }} </button>
       </div>
 
       <!-- Step 6: Summary -->
@@ -818,16 +881,22 @@ const createNewContact = async (fullName) => {
         <p v-if="selectedContactPerson">
           <strong>Mob:</strong> {{ selectedContactPerson.Phone }}
         </p>
-        <p id="pince"><strong>{{ translations[lang].summaryPinCode }}</strong> {{ pinCode }}</p>
+        <p id="pince"><strong>{{ translations[lang].summaryPinCode }}</strong> {{
+          PINCodeBrale }}</p>
         <p>{{ translations[lang].badgePrinting }}</p>
       </div>
     </form>
-    <div v-if="step === 6" class="additional-visitor-group">
-      <h2>{{ translations[lang].additionalVisitor }}</h2>
-      <p>{{ translations[lang].additionalVisitorPrompt }}</p>
-      <div class="avg-buttons">
-        <button @click="setAdditionalVisitor(true)">{{ translations[lang].yes }}</button>
-        <button @click="nextStep">{{ translations[lang].no }}</button>
+    <div v-if="step === 6">
+      <div v-if="!returningUser" class="additional-visitor-group">
+        <h2>{{ translations[lang].additionalVisitor }}</h2>
+        <p>{{ translations[lang].additionalVisitorPrompt }}</p>
+        <div class="avg-buttons">
+          <button @click="setAdditionalVisitor(true)">{{ translations[lang].yes }}</button>
+          <button @click="nextStep">{{ translations[lang].no }}</button>
+        </div>
+      </div>
+      <div v-else class="finish-group">
+        <button class="confirm-button" @click="nextStep">{{ translations[lang].finish }}</button>
       </div>
     </div>
 
@@ -880,6 +949,10 @@ const createNewContact = async (fullName) => {
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
   color: white;
+}
+
+input::placeholder {
+  color: #ccc;
 }
 
 .form-group input,
@@ -1055,8 +1128,8 @@ button {
   padding: 0.9rem 2rem;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #080808;
-  background-color: #000000;
+  color: #2c3e50;
+  background-color: #ffffff;
   border: none;
   /* border-radius: 0.5rem; */
   cursor: pointer;
@@ -1134,11 +1207,11 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  margin-top: 0;
+  margin-top: 1rem;
   background-color: #2c3e50;
   padding: 1rem;
   border-radius: 5px;
-  max-height: 20em;
+  max-height: 25em;
   max-width: 100%;
   overflow-y: auto;
 }
@@ -1150,9 +1223,21 @@ button {
   padding: 1rem 1rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: bold;
   color: #2c3e50;
+}
+
+.card-name {
+  font-size: 2.25rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.card-company {
+  font-size: 1.5rem;
+  text-align: center;
+  color: #7f8c8d;
 }
 
 .user-card:hover {
@@ -1234,6 +1319,28 @@ button {
   font-size: 3em;
   width: 5em;
   height: 2.5em;
+}
+
+.finish-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1rem;
+  color: white;
+}
+
+.finish-group button {
+  padding: 1rem 2rem;
+  font-size: 1.5rem;
+  color: #2c3e50;
+  background-color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 7em;
+  min-width: 7em;
+  max-width: 7em;
 }
 
 .thank-you {

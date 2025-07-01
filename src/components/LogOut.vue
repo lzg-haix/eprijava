@@ -8,14 +8,30 @@ if (!PAS) {
 }
 import SimpleKeyboard from './SimpleKeyboard.vue';
 
+const props = defineProps({
+  lang: {
+    type: String,
+    required: true,
+  },
+  translations: {
+    type: Object,
+    required: true,
+  },
+  goToMainPage: {
+    type: Function,
+    required: true,
+  }
+});
+
 const loggedInUsers = ref([]);
 const pinCode = ref('');
 const fullName = ref('');
-const inputMode = ref('pin');
+const inputMode = ref('name');
 const suggestedUsers = ref([]);
 const selectedUser = ref(null);
 const showGoodbyeMessage = ref(false);
 const goodbyeName = ref('');
+//const lang = ref('hr'); // Default language
 
 const fetchLoggedInUsers = async () => {
   try {
@@ -105,6 +121,7 @@ const logoutUserById = async (user) => {
       suggestedUsers.value = [];
       selectedUser.value = null;
       inputMode.value = 'pin';
+      props.goToMainPage();
     }, 2000);
   } catch (error) {
     console.error('Error logging out user:', error);
@@ -134,6 +151,10 @@ const logoutUserByPin = async () => {
 };
 
 const handleNameInput = () => {
+  if (!fullName.value.trim()) {
+    suggestedUsers.value = [];
+    return;
+  }
   suggestedUsers.value = loggedInUsers.value.filter((user) =>
     user.FullName.toLowerCase().includes(fullName.value.toLowerCase())
   );
@@ -169,14 +190,17 @@ onMounted(() => {
 <template>
   <div class="logout-container">
     <div class="input-mode-selector">
-      <button :class="{ active: inputMode === 'pin' }" @click="inputMode = 'pin'">Use PIN</button>
-      <button :class="{ active: inputMode === 'name' }" @click="inputMode = 'name'">Use Full Name</button>
+      <button :class="{ active: inputMode === 'pin' }" @click="inputMode = 'pin'">{{ translations[lang].usePIN
+      }}</button>
+      <button :class="{ active: inputMode === 'name' }" @click="inputMode = 'name'">{{ translations[lang].useName
+      }}</button>
     </div>
 
     <!-- PIN Input -->
     <div v-if="inputMode === 'pin'" class="pin-input">
-      <p>Enter your PIN:</p>
-      <input type="text" v-model="pinCode" readonly maxlength="4" placeholder="Enter PIN" />
+      <!-- <p>{{ translations[lang].enterYourPIN
+        }}:</p> -->
+      <input type="text" v-model="pinCode" readonly maxlength="4" :placeholder="translations[lang].enterYourPIN" />
       <div class="pin-keyboard-container">
         <SimpleKeyboard :keyboardClass="'pin-keyboard'" :input="pinCode" :lang="'num'" @onChange="onChange" />
       </div>
@@ -185,16 +209,18 @@ onMounted(() => {
 
     <!-- Full Name Input -->
     <div v-else class="name-input">
-      <p>Enter your full name:</p>
-      <input type="text" v-model="fullName" placeholder="Enter Full Name" />
+      <!-- <p>{{ translations[lang].enterYourName
+        }}:</p> -->
+      <input type="text" v-model="fullName" :placeholder="translations[lang].enterYourName" />
       <div class="suggestions-scroll">
         <div class="user-suggestions" v-if="suggestedUsers.length">
           <div class="user-card" v-for="user in suggestedUsers" :key="user.ID" @click="selectUser(user)">
-            {{ user.FullName }}
+            <div class="card-name">{{ user.FullName }}</div>
+            <div class="card-company">{{ user.CompanyName }}</div>
           </div>
         </div>
         <div class="full-keyboard-container">
-          <SimpleKeyboard :keyboardClass="'full-keyboard'" :input="fullName" :lang="'hr'" @onChange="onChange" />
+          <SimpleKeyboard :keyboardClass="'full-keyboard'" :input="fullName" :lang="props.lang" @onChange="onChange" />
         </div>
       </div>
     </div>
@@ -237,10 +263,39 @@ onMounted(() => {
   justify-content: center;
 }
 
+::v-deep(.hg-button) {
+  background-color: #ffffff;
+  color: #060707;
+  font-size: 2rem;
+  border: none;
+  border-radius: 5px;
+  padding: 1.75rem 1.5rem;
+  margin: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+::v-deep(.hg-button:hover) {
+  background-color: #2c3e50;
+  color: #ffffff;
+}
+
+::v-deep(.hg-button-active) {
+  background-color: #ffffff !important;
+  color: #2c3e50 !important;
+  transition: none;
+}
+
 .full-keyboard .hg-button {
-  height: 45px !important;
-  font-size: 18px !important;
-  color: black !important;
+  background-color: #ffffff;
+  color: #060707;
+  font-size: 2rem;
+  border: none;
+  border-radius: 5px;
+  padding: 1.75rem 1.5rem;
+  margin: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .simple-keyboard {
@@ -263,11 +318,13 @@ onMounted(() => {
   gap: 1rem;
   margin-top: 0;
   background-color: #2c3e50;
-  padding: 1rem;
+  padding: 0;
   border-radius: 5px;
   max-height: 20em;
   max-width: 100%;
   overflow-y: auto;
+  justify-content: center;
+  /* <-- Add this line to center the suggestion cards */
 }
 
 .user-card {
@@ -280,6 +337,18 @@ onMounted(() => {
   font-size: 2rem;
   font-weight: bold;
   color: #2c3e50;
+}
+
+.card-name {
+  font-size: 2.25rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.card-company {
+  font-size: 1.5rem;
+  text-align: center;
+  color: #7f8c8d;
 }
 </style>
 
@@ -297,8 +366,8 @@ onMounted(() => {
 
 .input-mode-selector {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 1rem;
+  margin-bottom: 1rem;
   width: 100%;
   justify-content: center;
 }
@@ -324,7 +393,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 1em;
 }
 
 .pin-input input,
@@ -335,7 +404,7 @@ onMounted(() => {
   text-align: center;
   border: 2px solid #ccc;
   border-radius: 5px;
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
 }
 
 .pin-keyboard-container,
@@ -346,16 +415,16 @@ onMounted(() => {
   margin: 20px 0;
 }
 
-/* .suggestions-scroll {
+.suggestions-scroll {
   width: 100%;
-  max-width: 20rem;
-  max-height: 325px;
+  /* max-width: 20rem; */
+  /* max-height: 325px; */
   overflow-y: auto;
-  margin-bottom: 10px;
-  background: #fafbfc;
+  /* margin-bottom: ; */
+  /* background: #fafbfc; */
   border-radius: 6px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-} */
+}
 
 .suggestions {
   display: flex;
@@ -378,9 +447,9 @@ onMounted(() => {
   background-color: #e0e0e0;
 }
 
-.suggestion-card p {
+/* .suggestion-card p {
   margin: 5px 0;
-}
+} */
 
 .logout-button {
   padding: 15px 30px;
@@ -399,7 +468,7 @@ onMounted(() => {
 
 p {
   font-size: 18px;
-  margin: 10px 0;
+  /* margin: 10px 0; */
 }
 
 .goodbye-overlay {
